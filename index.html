@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Bujho Toh! — Desi Heads-Up Game</title>
+  <meta name="description" content="A free, desi forehead guessing game: Bollywood, festivals, food, brands, cricket and more. Tilt your phone to play!">
+  <meta name="theme-color" content="#2a0845">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bujho Toh!">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Decorative animated background -->
+  <div class="bg" aria-hidden="true">
+    <svg class="rangoli r1" viewBox="0 0 200 200"><use href="#rangoli"/></svg>
+    <svg class="rangoli r2" viewBox="0 0 200 200"><use href="#rangoli"/></svg>
+    <div class="diyas"></div>
+  </div>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <g id="rangoli">
+        <g fill="none" stroke-width="3">
+          <circle cx="100" cy="100" r="92" stroke="#ffd200" stroke-dasharray="4 8"/>
+          <circle cx="100" cy="100" r="18" stroke="#ff3d6e" fill="#ff9a3d"/>
+        </g>
+        <g id="petal8">
+          <path d="M100 100 C 85 70, 92 30, 100 12 C 108 30, 115 70, 100 100Z" fill="#ff3d6e" opacity=".85"/>
+          <path d="M100 100 C 92 78, 96 50, 100 36 C 104 50, 108 78, 100 100Z" fill="#ffd200"/>
+          <circle cx="100" cy="8" r="5" fill="#38ef7d"/>
+        </g>
+        <use href="#petal8" transform="rotate(45 100 100)"/>
+        <use href="#petal8" transform="rotate(90 100 100)"/>
+        <use href="#petal8" transform="rotate(135 100 100)"/>
+        <use href="#petal8" transform="rotate(180 100 100)"/>
+        <use href="#petal8" transform="rotate(225 100 100)"/>
+        <use href="#petal8" transform="rotate(270 100 100)"/>
+        <use href="#petal8" transform="rotate(315 100 100)"/>
+        <circle cx="100" cy="100" r="8" fill="#7b2ff7"/>
+      </g>
+    </defs>
+  </svg>
+
+  <!-- ============ HOME ============ -->
+  <section id="home" class="screen active">
+    <header class="topbar">
+      <button class="icon-btn" id="btnHowTo" aria-label="How to play">?</button>
+      <button class="icon-btn" id="btnSettings" aria-label="Settings">⚙️</button>
+    </header>
+    <div class="hero">
+      <div class="logo">
+        <span class="logo-hi">बूझो तो!</span>
+        <h1>Bujho <em>Toh!</em></h1>
+      </div>
+      <p class="tagline">The desi forehead guessing game · <span>maathe pe phone, dimaag mein dhamaal</span></p>
+    </div>
+    <div id="deckGrid" class="deck-grid"></div>
+    <footer class="foot">Made with ❤️ & masala · free forever</footer>
+  </section>
+
+  <!-- ============ DECK SHEET ============ -->
+  <div id="deckSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-backdrop" data-close></div>
+    <div class="sheet-card">
+      <button class="close-x" data-close aria-label="Close">×</button>
+      <div class="sheet-emoji" id="sheetEmoji"></div>
+      <h2 id="sheetTitle"></h2>
+      <div class="sheet-hindi" id="sheetHindi"></div>
+      <p class="sheet-desc" id="sheetDesc"></p>
+      <div class="sheet-meta"><span id="sheetCount"></span><span id="sheetBest"></span></div>
+      <div class="label">Round time</div>
+      <div class="chips" id="timeChips">
+        <button data-t="30">30s</button><button data-t="60">60s</button><button data-t="90">90s</button><button data-t="120">2 min</button>
+      </div>
+      <button class="btn big primary" id="btnPlay">Khelo! ▶</button>
+      <div class="sheet-actions" id="customActions" hidden>
+        <button class="btn ghost small" id="btnEditDeck">✏️ Edit deck</button>
+        <button class="btn ghost small danger" id="btnDeleteDeck">🗑 Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ READY ============ -->
+  <section id="ready" class="screen">
+    <button class="icon-btn back" data-home aria-label="Back">←</button>
+    <div class="ready-wrap">
+      <div class="ready-anim" aria-hidden="true">
+        <div class="head">🙂</div>
+        <div class="phone-mini"><span>?</span></div>
+      </div>
+      <h2 id="readyTitle">Phone ko maathe pe rakho!</h2>
+      <p id="readyText">Hold your phone sideways on your forehead, screen facing your friends. The game starts automatically.</p>
+      <div class="tilt-legend">
+        <div><b class="g">⬇ Tilt down</b><span>Sahi! (correct)</span></div>
+        <div><b class="o">⬆ Tilt up</b><span>Pass</span></div>
+      </div>
+      <button class="btn big primary" id="btnStartNow">Start now</button>
+      <p class="hint" id="readyHint"></p>
+    </div>
+  </section>
+
+  <!-- ============ PLAY ============ -->
+  <section id="play" class="screen">
+    <div class="stage" id="stage">
+      <div class="play-top">
+        <span class="play-cat" id="playCat"></span>
+        <span class="play-timer" id="playTimer">60</span>
+        <span class="play-score" id="playScore">0</span>
+      </div>
+      <div class="word-wrap">
+        <div class="word" id="word"></div>
+        <div class="word-hint" id="wordHint"></div>
+      </div>
+      <div class="timer-bar"><i id="timerBar"></i></div>
+      <div class="tap-controls" id="tapControls">
+        <button class="tap pass" id="tapPass">⬆ Pass</button>
+        <button class="tap correct" id="tapCorrect">Sahi! ✓</button>
+      </div>
+      <button class="quit" id="btnQuit" aria-label="End round">✕</button>
+      <div class="flash" id="flash"><span id="flashText"></span></div>
+      <div class="countdown" id="countdown"><span id="countNum">3</span></div>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section id="results" class="screen">
+    <div class="results-wrap">
+      <div class="res-title" id="resTitle">Shabaash!</div>
+      <div class="res-score"><span id="resScore">0</span><small>correct</small></div>
+      <div class="res-sub" id="resSub"></div>
+      <ul class="res-list" id="resList"></ul>
+      <div class="res-actions">
+        <button class="btn big primary" id="btnAgain">Phir se! 🔁</button>
+        <button class="btn ghost" id="btnShare">Share score</button>
+        <button class="btn ghost" data-home>Choose another deck</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <div id="settingsSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="sheet-backdrop" data-close></div>
+    <div class="sheet-card">
+      <button class="close-x" data-close aria-label="Close">×</button>
+      <h2 id="setTitle">Settings</h2>
+      <label class="row"><span>🎵 Music</span><input type="checkbox" id="setMusic"></label>
+      <label class="row"><span>🔔 Sound effects</span><input type="checkbox" id="setSfx"></label>
+      <label class="row"><span>📳 Vibration</span><input type="checkbox" id="setVibe"></label>
+      <div class="row col"><span>🎮 Controls</span>
+        <div class="chips" id="setControls">
+          <button data-v="auto">Auto</button><button data-v="tilt">Tilt</button><button data-v="tap">Tap buttons</button>
+        </div>
+      </div>
+      <div class="row col"><span>📐 Tilt sensitivity</span>
+        <div class="chips" id="setSens">
+          <button data-v="low">Low</button><button data-v="medium">Medium</button><button data-v="high">High</button>
+        </div>
+      </div>
+      <button class="btn ghost small" id="btnResetSeen">Reset "already seen" words</button>
+      <button class="btn ghost small" id="btnTestTilt">Test my tilt sensor</button>
+      <div class="tilt-test" id="tiltTest" hidden>
+        <div class="meter"><i id="tiltNeedle"></i></div>
+        <div id="tiltTestText">Waiting for sensor…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HOW TO ============ -->
+  <div id="howSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+    <div class="sheet-backdrop" data-close></div>
+    <div class="sheet-card">
+      <button class="close-x" data-close aria-label="Close">×</button>
+      <h2 id="howTitle">Kaise khelein?</h2>
+      <ol class="how">
+        <li><b>Pick a deck</b> — Bollywood, festivals, food, brands, cricket…</li>
+        <li><b>Put the phone on your forehead</b>, sideways, screen facing your friends. Don't peek! 🙈</li>
+        <li><b>Friends give clues</b> — talk, act, or hum (each deck tells them how).</li>
+        <li><b>Guessed it?</b> Nod down — tilt the screen to the floor. ✅</li>
+        <li><b>Stuck?</b> Tilt your head back — screen to the ceiling — to pass. ⏭</li>
+        <li>Most correct answers before the timer ends wins. Pass the phone and take turns!</li>
+      </ol>
+      <p class="small-note">On iPhone, tap “Allow” when asked for motion access. If your phone has no motion sensor, the game shows tap buttons instead (handy for a friend to hold). On a laptop: ↓ / → = correct, ↑ / ← = pass.</p>
+    </div>
+  </div>
+
+  <!-- ============ CUSTOM DECK ============ -->
+  <div id="customSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="custTitle">
+    <div class="sheet-backdrop" data-close></div>
+    <div class="sheet-card">
+      <button class="close-x" data-close aria-label="Close">×</button>
+      <h2 id="custTitle">Apna Deck banao</h2>
+      <p class="small-note">Inside jokes, family names, office stuff — anything! One word or phrase per line (at least 5).</p>
+      <input id="custName" class="input" maxlength="32" placeholder="Deck name, e.g. Gupta Family Specials">
+      <div class="emoji-pick" id="custEmoji"></div>
+      <textarea id="custWords" class="input" rows="8" placeholder="Bua ji's famous rajma&#10;Papa's scooter&#10;Goa trip 2019&#10;..."></textarea>
+      <div class="chips" id="custMode">
+        <button data-v="say">🗣 Talk</button><button data-v="act">🎭 Act</button><button data-v="hum">🎤 Hum</button>
+      </div>
+      <button class="btn big primary" id="btnSaveDeck">Save deck</button>
+      <p class="hint" id="custErr"></p>
+    </div>
+  </div>
+
+  <div id="rotateHint" class="rotate-hint">📱↻ Turn your phone sideways</div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/tilt.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
