@@ -11,7 +11,7 @@
     set(k, v) { try { localStorage.setItem('bujho:' + k, JSON.stringify(v)); } catch (e) {} },
   };
   const settings = Object.assign(
-    { music: true, sfx: true, vibe: true, controls: 'auto', sens: 'medium', time: 60 },
+    { music: true, musicStyle: 'chill', sfx: true, vibe: true, controls: 'auto', sens: 'medium', time: 60 },
     store.get('settings', {})
   );
   const saveSettings = () => store.set('settings', settings);
@@ -19,7 +19,7 @@
   let seen = store.get('seen', {});
   let customDecks = store.get('custom', []);
 
-  A.musicOn = settings.music; A.sfxOn = settings.sfx;
+  A.musicOn = settings.music; A.sfxOn = settings.sfx; A.style = settings.musicStyle;
   T.setSensitivity(settings.sens);
 
   /* ---------- Decks ---------- */
@@ -460,6 +460,7 @@
     $('#setVibe').checked = settings.vibe;
     setChips('#setControls', 'v', settings.controls);
     setChips('#setSens', 'v', settings.sens);
+    setChips('#setStyle', 'v', settings.musicStyle);
   }
   $('#btnSettings').addEventListener('click', () => { A.init(); A.sfx.tap(); renderSettings(); openSheet('settingsSheet'); });
   $('#btnHowTo').addEventListener('click', () => { A.init(); A.sfx.tap(); openSheet('howSheet'); });
@@ -467,6 +468,11 @@
   $('#setSfx').addEventListener('change', e => { settings.sfx = e.target.checked; saveSettings(); A.setSfx(settings.sfx); A.sfx.tap(); });
   $('#setVibe').addEventListener('change', e => { settings.vibe = e.target.checked; saveSettings(); vibrate(40); });
   $$('#setControls button').forEach(b => b.addEventListener('click', () => { settings.controls = b.dataset.v; saveSettings(); setChips('#setControls', 'v', settings.controls); A.sfx.tap(); }));
+  $$('#setStyle button').forEach(b => b.addEventListener('click', () => {
+    settings.musicStyle = b.dataset.v; saveSettings(); setChips('#setStyle', 'v', settings.musicStyle);
+    if (!settings.music) { settings.music = true; saveSettings(); $('#setMusic').checked = true; A.setMusic(true); }
+    A.setStyle(settings.musicStyle); A.playSong('menu'); // preview it
+  }));
   $$('#setSens button').forEach(b => b.addEventListener('click', () => { settings.sens = b.dataset.v; saveSettings(); T.setSensitivity(settings.sens); setChips('#setSens', 'v', settings.sens); A.sfx.tap(); }));
   $('#btnResetSeen').addEventListener('click', () => { seen = {}; store.set('seen', seen); toast('Done — all cards are fresh again ✨'); });
   $('#btnTestTilt').addEventListener('click', async () => {

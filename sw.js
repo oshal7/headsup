@@ -1,5 +1,5 @@
 /* Bujho Toh! service worker — makes the game work offline after the first visit. */
-const CACHE = 'bujho-v2';
+const CACHE = 'bujho-v3';
 const CORE = [
   './', 'index.html', 'css/style.css', 'js/data.js', 'js/audio.js', 'js/tilt.js', 'js/fx.js', 'js/app.js',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',

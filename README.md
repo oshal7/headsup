@@ -41,7 +41,7 @@ saved on your phone.
 - Works on **iPhone and Android**, either landscape direction. If an iPhone has rotation lock
   on, the game rotates the card itself.
 - **Laptop mode**: the guesser turns their back to the screen; friends press Space (correct) or P (pass). **Tap mode** for phones without a sensor.
-- **Original Bollywood/Punjabi-style music & sound**, all synthesized live in the browser
+- **Three music styles** (Settings → Music style): ☕ Chill Chai (default, soft piano + flute + light tabla), 🪕 Classic (harmonium + bansuri + dholak), 🥁 Party (bhangra). All synthesized live in the browser
   (harmonium, bansuri, dhol bhangra beat, tumbi, claps, temple-bell "correct",
   shankh "time's up", shehnai fanfare). Nothing copyrighted, nothing to download.
 - Animations: marigold-petal confetti, floating diyas, spinning rangoli, card pops.

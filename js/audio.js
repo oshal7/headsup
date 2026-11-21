@@ -29,7 +29,7 @@
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 4;
     A.master.connect(comp).connect(ctx.destination);
-    A.musicBus = ctx.createGain(); A.musicBus.gain.value = A.musicOn ? 0.55 : 0;
+    A.musicBus = ctx.createGain(); A.musicBus.gain.value = A.musicOn ? 0.45 : 0;
     A.sfxBus = ctx.createGain(); A.sfxBus.gain.value = A.sfxOn ? 1 : 0;
     A.musicBus.connect(A.master); A.sfxBus.connect(A.master);
     // Simple convolution reverb from decaying noise — gives a "temple hall" feel
@@ -46,7 +46,7 @@
 
   A.setMusic = function (on) {
     A.musicOn = on;
-    if (A.musicBus) A.musicBus.gain.setTargetAtTime(on ? 0.55 : 0, A.ctx.currentTime, 0.1);
+    if (A.musicBus) A.musicBus.gain.setTargetAtTime(on ? 0.45 : 0, A.ctx.currentTime, 0.1);
   };
   A.setSfx = function (on) {
     A.sfxOn = on;
@@ -156,7 +156,7 @@
       const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.8;
       const ng = ctx.createGain(); ng.gain.value = 0.05; n.connect(bp).connect(ng).connect(env); n.start();
     }
-    const master = ctx.createGain(); master.gain.value = kind === 'bansuri' ? 0.22 : 0.1;
+    const master = ctx.createGain(); master.gain.value = kind === 'bansuri' ? 0.3 : 0.1;
     env.connect(master); out(master, A.musicBus, kind === 'bansuri' ? 0.45 : 0.25);
     o.start(); o2.start(); vib.start();
     return {
@@ -257,10 +257,59 @@
     [36, 0, 12],
   ];
 
+  /* ---------- Chill Chai: soft & simple ---------- */
+  // Soft electric-piano (Rhodes-like) note.
+  function epiano(freq, t, dur, vol = 0.09) {
+    const g = A.ctx.createGain(), lp = A.ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 2600;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(vol * 0.35, t + 0.4);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + Math.max(0.6, dur));
+    lp.connect(g); out(g, A.musicBus, 0.4);
+    [[1, 1], [2, 0.22], [3.01, 0.06]].forEach(([m, a]) => {
+      const o = A.ctx.createOscillator(), og = A.ctx.createGain();
+      o.type = 'sine'; o.frequency.value = freq * m; og.gain.value = a;
+      o.connect(og).connect(lp); o.start(t); o.stop(t + Math.max(0.6, dur) + 0.05);
+    });
+  }
+  function shaker(t, vol = 0.03) {
+    const n = noise(), hp = A.ctx.createBiquadFilter(), g = A.ctx.createGain();
+    hp.type = 'highpass'; hp.frequency.value = 6000;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    n.connect(hp).connect(g); out(g, A.musicBus, 0); n.start(t); n.stop(t + 0.08);
+  }
+
+  // Warm pop progression I – V – vi – IV (major scale degrees)
+  const CHILL_CHORDS = [[0, 2, 4], [4, 6, 8], [5, 7, 9], [3, 5, 7]];
+  const CHILL_MEL_A = [[0, 4, 6], [6, 5, 3], [9, 4, 3], [12, 4, 9], [21, 2, 3], [24, 5, 6], [30, 4, 3], [33, 2, 3], [36, 3, 6], [42, 2, 6]];
+  const CHILL_MEL_B = [[0, 7, 6], [6, 6, 3], [9, 5, 3], [12, 4, 12], [24, 5, 3], [27, 4, 3], [30, 2, 6], [36, 1, 6], [42, 0, 6]];
+
+  function chillStep(song, i, t, stepDur) {
+    const s = i % 12, bar = Math.floor(i / 12) % 4, loop = Math.floor(i / 48), pos = i % 48;
+    const ch = CHILL_CHORDS[bar], V = 2.2; // overall loudness of this style
+    // gentle broken chords
+    if (s === 0) { ch.forEach(d => epiano(hz(d, -1), t, stepDur * 12, 0.05 * V)); epiano(hz(ch[0], -2), t, stepDur * 12, 0.08 * V); }
+    if (s === 3) epiano(hz(ch[1]), t, stepDur * 4, 0.04 * V);
+    if (s === 6) epiano(hz(ch[2]), t, stepDur * 4, 0.04 * V);
+    if (s === 9) epiano(hz(ch[1]), t, stepDur * 4, 0.035 * V);
+    // light tabla & shaker
+    if (s === 0) tablaBayan(t, 0.22 * V);
+    if (s === 6 && song.busy) tablaBayan(t, 0.14 * V);
+    if (s === 3 || s === 9) tablaDayan(t, 1, 0.1 * V);
+    if (song.busy ? s % 3 === 0 : s === 6) shaker(t, (song.busy ? 0.025 : 0.02) * V);
+    const mel = song.melodies[loop % song.melodies.length];
+    if (mel) for (const [st, deg, len] of mel) {
+      if (st === pos) song.leadVoice.note(hz(deg, 1), t, stepDur * len, Math.random() < 0.3 ? { glide: true } : {});
+    }
+  }
+
   const SONGS = {
-    // Calm, warm home-screen groove: dholak + harmonium + bansuri
-    menu: {
-      bpm: 92, lead: 'bansuri', melodies: [MENU_MELODY, MENU_MELODY_B, null, MENU_MELODY],
+    chill: { bpm: 80, lead: 'bansuri', swing: false, step: chillStep, melodies: [null, CHILL_MEL_A, null, CHILL_MEL_B] },
+    chillPlay: { bpm: 92, lead: 'bansuri', swing: false, step: chillStep, busy: true, melodies: [CHILL_MEL_A, null, CHILL_MEL_B, null] },
+    // Calm, warm groove: dholak + harmonium + bansuri
+    classic: {
+      bpm: 92, lead: 'bansuri', swing: true, melodies: [MENU_MELODY, MENU_MELODY_B, null, MENU_MELODY],
       drums(s, t, intense) {
         if (s === 0 || s === 6) dholBass(t, s === 0 ? 0.55 : 0.4);
         if (s === 3 || s === 9) dholTilli(t, 0.22);
@@ -268,11 +317,10 @@
       },
       harm: true, tumbi: false, clap: false,
     },
-    // Upbeat bhangra for the round: dhol chaal + claps + tumbi + harmonium lead
-    play: {
-      bpm: 118, lead: 'reed', melodies: [PLAY_MELODY, PLAY_MELODY_B],
+    // Upbeat bhangra: dhol chaal + claps + tumbi + harmonium lead (speeds up near the end)
+    party: {
+      bpm: 118, lead: 'reed', swing: true, canIntense: true, melodies: [PLAY_MELODY, PLAY_MELODY_B],
       drums(s, t, intense) {
-        // dhol "chaal": BOOM .. ta BOOM | BOOM .. ta BOOM (swung)
         if (s === 0 || s === 5 || s === 6 || (intense && s === 11)) dholBass(t, s === 0 ? 0.9 : 0.7);
         if (s === 2 || s === 3 || s === 8 || s === 9) dholTilli(t, s % 3 === 0 ? 0.35 : 0.2);
         if (intense && (s === 1 || s === 7 || s === 10)) dholTilli(t, 0.15);
@@ -281,7 +329,17 @@
     },
   };
 
+  // Music styles the player can choose in Settings: which song plays on menus vs. during a round.
+  const STYLES = {
+    chill: { menu: 'chill', play: 'chillPlay' },
+    classic: { menu: 'classic', play: 'classic' },
+    party: { menu: 'classic', play: 'party' },
+  };
+  A.style = 'chill';
+  A._role = null;
+
   function scheduleStep(song, i, t, stepDur) {
+    if (song.step) return song.step(song, i, t, stepDur);
     const s = i % 12, bar = Math.floor(i / 12) % 4, loop = Math.floor(i / 48), pos = i % 48;
     song.drums(s, t, song.intense);
     if (song.clap && (s === 3 || s === 9)) clap(t, 0.22);
@@ -312,30 +370,37 @@
     const song = A._song; if (!song) return;
     const stepDur = 60 / (song.bpm * (song.intense ? 1.12 : 1)) / 3;
     while (A._nextTime < A.ctx.currentTime + 0.15) {
-      // swing: lengthen the first triplet slightly for a bouncy feel
       const s = A._step % 3;
-      const swing = s === 0 ? 1.06 : s === 1 ? 0.94 : 1;
+      const swing = !song.swing ? 1 : s === 0 ? 1.06 : s === 1 ? 0.94 : 1;
       scheduleStep(song, A._step, A._nextTime, stepDur);
       A._nextTime += stepDur * swing;
       A._step++;
     }
   }
 
-  A.playSong = function (name) {
+  // role: 'menu' or 'play'. The chosen style decides the actual song.
+  A.playSong = function (role) {
     if (!A.ctx) return;
-    if (A._song && A._song.name === name) return;
+    const name = (STYLES[A.style] || STYLES.chill)[role] || role;
+    if (A._song && A._song.name === name) { A._role = role; return; }
     A.stopSong();
+    A._role = role;
     const s = SONGS[name]; if (!s) return;
     A._song = Object.assign({ name, intense: false }, s);
     A._song.leadVoice = makeLead(s.lead);
     A._step = 0; A._nextTime = A.ctx.currentTime + 0.08;
     A._timer = setInterval(scheduler, 25);
   };
-  A.setIntense = function (on) { if (A._song) A._song.intense = on; };
+  A.setStyle = function (style) {
+    if (!STYLES[style]) return;
+    A.style = style;
+    if (A._song && A._role) { const r = A._role; A.stopSong(); A.playSong(r); }
+  };
+  A.setIntense = function (on) { if (A._song && A._song.canIntense) A._song.intense = on; };
   A.stopSong = function () {
     clearInterval(A._timer); A._timer = null;
     if (A._song && A._song.leadVoice) A._song.leadVoice.stop();
-    A._song = null;
+    A._song = null; A._role = null;
   };
   A._harmonium = (degs, t, dur, vol) => harmonium(degs.map(d => kz(d)), t, dur, vol, A.sfxBus);
 
