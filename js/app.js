@@ -124,7 +124,7 @@
   async function enterGameMode() {
     try {
       const el = document.documentElement;
-      if (!document.fullscreenElement && el.requestFullscreen && matchMedia('(pointer: coarse)').matches) {
+      if (!document.fullscreenElement && el.requestFullscreen) {
         await el.requestFullscreen({ navigationUI: 'hide' });
       }
     } catch (e) {}
@@ -171,6 +171,9 @@
 
   /* ---------- Starting a round ---------- */
   let useTilt = false;
+  // Laptop/desktop: mouse or trackpad as the main pointer and no touch screen.
+  const IS_LAPTOP = !matchMedia('(pointer: coarse)').matches && !('ontouchstart' in window);
+  if (IS_LAPTOP) document.body.classList.add('laptop');
   let readyWatch = null;
 
   $('#btnPlay').addEventListener('click', async () => {
@@ -178,13 +181,14 @@
     closeSheets();
     // Permission must be requested inside this tap (iOS).
     let perm = 'unsupported';
-    if (settings.controls !== 'tap') perm = await T.requestPermission();
+    const wantTilt = settings.controls === 'tilt' || (settings.controls === 'auto' && !IS_LAPTOP);
+    if (wantTilt) perm = await T.requestPermission();
     enterGameMode();
     show('ready');
     A.stopSong();
     $('#readyHint').textContent = '';
     useTilt = false;
-    if (settings.controls !== 'tap') {
+    if (wantTilt) {
       // Probe even if the permission call said no: some browsers still deliver events.
       $('#readyTitle').textContent = 'Checking motion sensor…';
       useTilt = await T.probe(perm === 'granted' ? 1200 : 600);
@@ -203,6 +207,7 @@
       $('#readyTitle').textContent = 'Phone ko maathe pe rakho!';
       $('#readyText').textContent = 'Hold the phone sideways on your forehead, screen facing your friends. The game starts by itself.';
       $('.tilt-legend').style.display = '';
+      $('.key-legend').style.display = 'none';
       $('#btnStartNow').textContent = 'Start now';
       let uprightSince = 0;
       readyWatch = setInterval(() => {
@@ -215,10 +220,13 @@
         } else uprightSince = 0;
       }, 100);
     } else {
-      $('#readyTitle').textContent = 'Tap mode';
-      $('#readyText').textContent = 'A friend holds the phone (or play on a laptop) and taps Sahi / Pass. Keyboard: ↓ or → = correct, ↑ or ← = pass.';
+      $('#readyTitle').textContent = IS_LAPTOP ? '💻 Laptop mode' : 'Tap mode';
+      $('#readyText').textContent = IS_LAPTOP
+        ? 'The guesser sits with their back to the screen. Everyone else can see the word: give clues, and press a key when they get it.'
+        : 'A friend holds the phone and taps Sahi or Pass while the guesser gives answers.';
       $('.tilt-legend').style.display = 'none';
-      $('#btnStartNow').textContent = 'Start! ▶';
+      $('.key-legend').style.display = IS_LAPTOP ? '' : 'none';
+      $('#btnStartNow').textContent = IS_LAPTOP ? 'Start! ▶  (Space)' : 'Start! ▶';
     }
   }
   $('#btnStartNow').addEventListener('click', () => { A.init(); clearInterval(readyWatch); beginCountdown(); });
@@ -289,7 +297,7 @@
   // Grow the word as large as it can be while still fitting the stage.
   function fitWord() {
     const w = $('#word'), wrap = w.parentElement;
-    const maxW = wrap.clientWidth * 0.96, maxH = wrap.clientHeight * 0.82 - ($('#wordHint').offsetHeight || 0);
+    const maxW = wrap.clientWidth * 0.88, maxH = wrap.clientHeight * 0.82 - ($('#wordHint').offsetHeight || 0);
     let lo = 18, hi = Math.min(260, Math.max(40, maxH));
     while (hi - lo > 1) {
       const mid = (lo + hi) / 2;
@@ -355,9 +363,12 @@
   $('#tapCorrect').addEventListener('click', () => answer(true));
   $('#tapPass').addEventListener('click', () => answer(false));
   addEventListener('keydown', e => {
-    if (document.body.dataset.screen !== 'play') return;
-    if (['ArrowDown', 'ArrowRight', 'Enter'].includes(e.key)) { e.preventDefault(); answer(true); }
-    else if (['ArrowUp', 'ArrowLeft'].includes(e.key)) { e.preventDefault(); answer(false); }
+    const scr = document.body.dataset.screen;
+    if (scr === 'ready' && [' ', 'Enter'].includes(e.key)) { e.preventDefault(); $('#btnStartNow').click(); return; }
+    if (scr === 'results' && e.key === 'Enter') { e.preventDefault(); $('#btnAgain').click(); return; }
+    if (scr !== 'play' || e.repeat) return;
+    if ([' ', 'ArrowDown', 'ArrowRight', 'Enter', 'c', 'C'].includes(e.key)) { e.preventDefault(); answer(true); }
+    else if (['ArrowUp', 'ArrowLeft', 'p', 'P', 'Backspace'].includes(e.key)) { e.preventDefault(); answer(false); }
     else if (e.key === 'Escape') quitRound();
   });
   $('#btnQuit').addEventListener('click', quitRound);

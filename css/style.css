@@ -198,6 +198,13 @@ textarea.input { resize: vertical; }
 .tilt-legend .o { color: #ffbe5c; }
 .tilt-legend span { font-size: 13px; color: var(--muted); }
 
+.key-legend { display: flex; gap: 10px; margin: 16px 0 6px; flex-wrap: wrap; }
+.key-legend div { flex: 1; min-width: 130px; background: var(--card); border: 1px solid var(--card-line); border-radius: 16px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.key-legend span { font-size: 13px; color: var(--muted); }
+kbd { font-family: inherit; font-weight: 800; font-size: .85em; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .3); border-bottom-width: 3px; border-radius: 8px; padding: 1px 8px; }
+.tap kbd.k { display: none; margin-left: 8px; font-size: .55em; vertical-align: middle; }
+body.laptop .tap kbd.k { display: inline-block; }
+
 /* ---------- Play ---------- */
 #play { padding: 0; position: fixed; inset: 0; }
 .stage {

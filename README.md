@@ -40,9 +40,9 @@ saved on your phone.
   screen to the ceiling = ⏭ pass. Auto-starts when the phone is on your forehead.
 - Works on **iPhone and Android**, either landscape direction. If an iPhone has rotation lock
   on, the game rotates the card itself.
-- **Tap mode** (no sensor, or a friend holds the phone) and **keyboard** (↓/→ correct, ↑/← pass).
-- **Original Indian-style music & sound**, all synthesized live in the browser
-  (sitar plucks, tabla in keherwa & dadra taal, tanpura drone, temple-bell "correct",
+- **Laptop mode**: the guesser turns their back to the screen; friends press Space (correct) or P (pass). **Tap mode** for phones without a sensor.
+- **Original Bollywood/Punjabi-style music & sound**, all synthesized live in the browser
+  (harmonium, bansuri, dhol bhangra beat, tumbi, claps, temple-bell "correct",
   shankh "time's up", shehnai fanfare). Nothing copyrighted, nothing to download.
 - Animations: marigold-petal confetti, floating diyas, spinning rangoli, card pops.
 - Round timer of 30 / 60 / 90 / 120 s, best score per deck, no repeated cards until a deck runs out.

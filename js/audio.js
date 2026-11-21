@@ -1,13 +1,14 @@
 /* Bujho Toh! — procedural Indian music & SFX with the Web Audio API.
- * Nothing is downloaded: sitar plucks use Karplus-Strong synthesis, tabla is
- * pitched sines + noise, the tanpura drone is filtered saws, the temple bell is
- * inharmonic partials and the shankh (conch) is a breathy filtered horn.
+ * Nothing is downloaded. Music is a Bollywood/Punjabi-style groove: harmonium
+ * chords, bansuri or reed lead (with meend glides & kan grace notes), dhol,
+ * dholak, tumbi and claps in the Khamaj scale. SFX: tabla taps, temple bell,
+ * shankh (conch) and a shehnai fanfare.
  */
 (function () {
   const A = {
     ctx: null, master: null, musicBus: null, sfxBus: null, reverb: null,
     musicOn: true, sfxOn: true,
-    _timer: null, _nextTime: 0, _step: 0, _song: null, _droneNodes: [], _pluckCache: new Map(),
+    _timer: null, _nextTime: 0, _step: 0, _song: null, 
   };
 
   // Sa = C#4. Bilawal (major) thaat in semitones: S R G M P D N S'
@@ -69,42 +70,6 @@
 
   /* ---------- Instruments ---------- */
 
-  // Karplus-Strong plucked string with a touch of sitar "jawari" buzz.
-  function pluckBuffer(freq, dur) {
-    const key = Math.round(freq) + ':' + dur;
-    if (A._pluckCache.has(key)) return A._pluckCache.get(key);
-    const sr = A.ctx.sampleRate, n = Math.floor(sr * dur);
-    const buf = A.ctx.createBuffer(1, n, sr), d = buf.getChannelData(0);
-    const period = Math.max(2, Math.round(sr / freq));
-    const ring = new Float32Array(period);
-    for (let i = 0; i < period; i++) ring[i] = Math.random() * 2 - 1;
-    let idx = 0;
-    for (let i = 0; i < n; i++) {
-      const next = (idx + 1) % period;
-      const v = 0.4985 * (ring[idx] + ring[next]);
-      ring[idx] = v;
-      // jawari: soft asymmetric clip adds the characteristic buzz
-      d[i] = v > 0 ? Math.tanh(v * 2.2) * 0.8 : v;
-      idx = next;
-    }
-    A._pluckCache.set(key, buf);
-    return buf;
-  }
-
-  function sitar(freq, t, vol = 0.35, dur = 1.6, bus = A.musicBus) {
-    const src = A.ctx.createBufferSource();
-    src.buffer = pluckBuffer(freq, dur);
-    // meend (slide) on some notes
-    if (Math.random() < 0.15) {
-      src.playbackRate.setValueAtTime(0.94, t);
-      src.playbackRate.linearRampToValueAtTime(1, t + 0.12);
-    }
-    const g = A.ctx.createGain(); g.gain.value = vol;
-    const hp = A.ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 160;
-    src.connect(hp).connect(g); out(g, bus, 0.35);
-    src.start(t);
-  }
-
   function tablaDayan(t, pitch = 1, vol = 0.5, bus = A.musicBus) { // "na"/"tin" — right drum
     const o = A.ctx.createOscillator(), g = A.ctx.createGain();
     o.type = 'sine'; o.frequency.setValueAtTime(SA * 2 * pitch, t);
@@ -140,74 +105,218 @@
     n.connect(lp).connect(g); out(g, bus, 0.2); n.start(t); n.stop(t + 0.2);
   }
 
-  function drone(on) {
-    A._droneNodes.forEach(n => { try { n.stop(); } catch (e) {} });
-    A._droneNodes = [];
-    if (!on) return;
-    const t = A.ctx.currentTime;
-    const freqs = [SA / 2, hz(4, -1), SA / 2 * 1.002, SA];
-    const lp = A.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900;
-    const g = A.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.06, t + 2);
-    lp.connect(g); out(g, A.musicBus, 0.4);
+  /* ---------- Bollywood / Punjabi style instruments ---------- */
+  // Mixolydian = Bilawal with komal Ni (Khamaj flavour), the sound of Punjabi folk & Bollywood dance songs.
+  // Degrees: 0 Sa, 1 Re, 2 Ga, 3 Ma, 4 Pa, 5 Dha, 6 komal Ni, 7 Sa'
+  const KHAMAJ = [0, 2, 4, 5, 7, 9, 10];
+  const kz = (deg, oct = 0) => {
+    const i = ((deg % 7) + 7) % 7, extra = Math.floor(deg / 7);
+    return SA * Math.pow(2, (KHAMAJ[i] + 12 * (extra + oct)) / 12);
+  };
+
+  // Harmonium: detuned reeds, a bit nasal, with bellows tremolo.
+  function harmonium(freqs, t, dur, vol = 0.07, bus = A.musicBus) {
+    const g = A.ctx.createGain(), lp = A.ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 2200; lp.Q.value = 0.7;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.04);
+    g.gain.setValueAtTime(vol, t + dur - 0.06);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    const trem = A.ctx.createOscillator(), tg = A.ctx.createGain();
+    trem.frequency.value = 4.5; tg.gain.value = vol * 0.15;
+    trem.connect(tg).connect(g.gain);
+    lp.connect(g); out(g, bus, 0.15);
     freqs.forEach(f => {
-      const o = A.ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
-      const lfo = A.ctx.createOscillator(), lg = A.ctx.createGain();
-      lfo.frequency.value = 0.15 + Math.random() * 0.2; lg.gain.value = 1.5;
-      lfo.connect(lg).connect(o.detune);
-      o.connect(lp); o.start(t); lfo.start(t);
-      A._droneNodes.push(o, lfo);
+      [-6, 6].forEach(det => {
+        const o = A.ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
+        o.connect(lp); o.start(t); o.stop(t + dur + 0.02);
+      });
+      const sq = A.ctx.createOscillator(); sq.type = 'square'; sq.frequency.value = f;
+      const sg = A.ctx.createGain(); sg.gain.value = 0.4; sq.connect(sg).connect(lp); sq.start(t); sq.stop(t + dur + 0.02);
     });
+    trem.start(t); trem.stop(t + dur + 0.02);
   }
 
-  /* ---------- Songs (step sequencer) ---------- */
-  // Keherwa taal: Dha Ge Na Ti | Na Ka Dhi Na  (8 beats, played as 16 half-steps)
-  const KEHERWA = ['DHA', '', 'ge', 'NA', 'ti', '', 'NA', 'ka', 'na', '', 'ka', 'DHI', 'na', 'ge', 'NA', ''];
-  // Dadra (6) for the menu — lilting & festive
-  const DADRA = ['DHA', '', 'DHI', '', 'NA', '', 'DHA', '', 'TU', '', 'NA', ''];
+  // Monophonic lead voice with meend (glides) and kan (grace notes).
+  // kind: 'bansuri' (breathy flute) or 'reed' (harmonium/shehnai-ish lead)
+  function makeLead(kind) {
+    const ctx = A.ctx;
+    const o = ctx.createOscillator(); o.type = kind === 'bansuri' ? 'triangle' : 'sawtooth';
+    const o2 = ctx.createOscillator(); o2.type = kind === 'bansuri' ? 'sine' : 'square'; o2.detune.value = kind === 'bansuri' ? 1200 : 5;
+    const g2 = ctx.createGain(); g2.gain.value = kind === 'bansuri' ? 0.12 : 0.35;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = kind === 'bansuri' ? 2600 : 1900; f.Q.value = 1;
+    const env = ctx.createGain(); env.gain.value = 0;
+    const vib = ctx.createOscillator(), vg = ctx.createGain(); vib.frequency.value = 5.2; vg.gain.value = 0;
+    vib.connect(vg); vg.connect(o.detune); vg.connect(o2.detune);
+    o.connect(f); o2.connect(g2).connect(f); f.connect(env);
+    // breath noise for bansuri
+    let n = null;
+    if (kind === 'bansuri') {
+      n = noise(); n.loop = true;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.8;
+      const ng = ctx.createGain(); ng.gain.value = 0.05; n.connect(bp).connect(ng).connect(env); n.start();
+    }
+    const master = ctx.createGain(); master.gain.value = kind === 'bansuri' ? 0.22 : 0.1;
+    env.connect(master); out(master, A.musicBus, kind === 'bansuri' ? 0.45 : 0.25);
+    o.start(); o2.start(); vib.start();
+    return {
+      note(freq, t, dur, opts = {}) {
+        const fr = o.frequency, fr2 = o2.frequency;
+        if (opts.kan) { // quick grace note from above
+          fr.setValueAtTime(opts.kan, t); fr2.setValueAtTime(opts.kan, t);
+          fr.setTargetAtTime(freq, t + 0.05, 0.015); fr2.setTargetAtTime(freq, t + 0.05, 0.015);
+        } else if (opts.glide) { // meend: slide into the note
+          fr.setTargetAtTime(freq, t, 0.04); fr2.setTargetAtTime(freq, t, 0.04);
+        } else { fr.setValueAtTime(freq, t); fr2.setValueAtTime(freq, t); }
+        env.gain.cancelScheduledValues(t);
+        env.gain.setTargetAtTime(1, t, 0.015);
+        env.gain.setTargetAtTime(0.75, t + 0.08, 0.1);
+        env.gain.setTargetAtTime(0, t + dur * 0.92, 0.03);
+        // vibrato blooms on long notes, like a real singer/flautist
+        vg.gain.cancelScheduledValues(t); vg.gain.setValueAtTime(0, t);
+        if (dur > 0.35) vg.gain.linearRampToValueAtTime(kind === 'bansuri' ? 18 : 12, t + Math.min(dur, 0.8));
+      },
+      stop() { try { o.stop(); o2.stop(); vib.stop(); n && n.stop(); } catch (e) {} env.disconnect(); },
+    };
+  }
 
-  // Melody phrases (scale degrees; null = rest). Inspired by folk/raag Bilawal shapes.
-  const MENU_TUNE = [
-    0, null, 2, 4, null, 4, 5, 4, 2, null, 0, null,
-    4, null, 5, 7, null, 7, 8, 7, 5, 4, null, null,
-    7, null, 5, 4, null, 2, 4, 2, 0, null, -1, null,
-    0, 2, 4, 2, 0, null, -3, null, 0, null, null, null,
+  // Tumbi: tiny bright pluck, very short (the Punjabi one-string "tung tung").
+  function tumbi(freq, t, vol = 0.16) {
+    const o = A.ctx.createOscillator(), g = A.ctx.createGain(), f = A.ctx.createBiquadFilter();
+    o.type = 'square'; o.frequency.setValueAtTime(freq * 1.02, t); o.frequency.exponentialRampToValueAtTime(freq, t + 0.03);
+    f.type = 'bandpass'; f.frequency.value = freq * 3; f.Q.value = 3;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    o.connect(f).connect(g); out(g, A.musicBus, 0.1); o.start(t); o.stop(t + 0.2);
+  }
+
+  // Dhol: heavy "dagga" bass side and sharp "tilli" stick side.
+  function dholBass(t, vol = 0.9) {
+    const o = A.ctx.createOscillator(), g = A.ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(52, t + 0.18);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    o.connect(g); out(g, A.musicBus, 0.05); o.start(t); o.stop(t + 0.42);
+    const n = noise(), lp = A.ctx.createBiquadFilter(), ng = A.ctx.createGain();
+    lp.type = 'lowpass'; lp.frequency.value = 700;
+    ng.gain.setValueAtTime(vol * 0.5, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    n.connect(lp).connect(ng); out(ng, A.musicBus, 0); n.start(t); n.stop(t + 0.08);
+  }
+  function dholTilli(t, vol = 0.35) {
+    const n = noise(), hp = A.ctx.createBiquadFilter(), g = A.ctx.createGain();
+    hp.type = 'bandpass'; hp.frequency.value = 2600; hp.Q.value = 1.4;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    n.connect(hp).connect(g); out(g, A.musicBus, 0.1); n.start(t); n.stop(t + 0.07);
+    const o = A.ctx.createOscillator(), og = A.ctx.createGain();
+    o.type = 'triangle'; o.frequency.value = 420;
+    og.gain.setValueAtTime(vol * 0.6, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    o.connect(og); out(og, A.musicBus, 0); o.start(t); o.stop(t + 0.09);
+  }
+  function clap(t, vol = 0.25) {
+    [0, 0.012, 0.024].forEach(d => {
+      const n = noise(), bp = A.ctx.createBiquadFilter(), g = A.ctx.createGain();
+      bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 0.9;
+      g.gain.setValueAtTime(vol, t + d); g.gain.exponentialRampToValueAtTime(0.001, t + d + 0.09);
+      n.connect(bp).connect(g); out(g, A.musicBus, 0.2); n.start(t + d); n.stop(t + d + 0.1);
+    });
+  }
+  function bass(freq, t, dur, vol = 0.28) {
+    const o = A.ctx.createOscillator(), g = A.ctx.createGain(), lp = A.ctx.createBiquadFilter();
+    o.type = 'triangle'; o.frequency.value = freq; lp.type = 'lowpass'; lp.frequency.value = 400;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.01, t + dur);
+    o.connect(lp).connect(g); out(g, A.musicBus, 0); o.start(t); o.stop(t + dur + 0.02);
+  }
+
+  /* ---------- Songs ---------- */
+  // Bars are 12 steps (4 beats × triplets) for the bouncy bhangra/dholak swing.
+  // Chord loop: Sa – komal Ni – Ma – Sa  (I – bVII – IV – I), the classic Punjabi/Bollywood party loop.
+  const CHORDS = [[0, 2, 4], [-1, 1, 3], [3, 5, 7], [0, 2, 4]]; // degree triads
+  const ROOTS = [0, -1, 3, 0];
+
+  // Melodies: [step in 4-bar loop (0..47), degree, length in steps]
+  const PLAY_MELODY = [
+    [0, 7, 2], [3, 6, 1], [4, 5, 2], [6, 4, 3], [9, 2, 3],
+    [12, 4, 2], [15, 5, 1], [16, 6, 2], [18, 7, 6],
+    [24, 8, 2], [27, 7, 1], [28, 6, 2], [30, 5, 2], [33, 4, 3],
+    [36, 2, 2], [39, 3, 1], [40, 2, 2], [42, 1, 3], [45, 0, 3],
   ];
-  const PLAY_TUNE = [
-    0, 2, 4, 2, 4, 5, 4, null, 7, 5, 4, 2, 4, null, 2, null,
-    0, 2, 4, 5, 7, null, 8, 7, 5, null, 4, 5, 4, 2, 0, null,
+  const PLAY_MELODY_B = [
+    [0, 4, 3], [3, 4, 1], [4, 5, 2], [6, 7, 6],
+    [12, 6, 3], [15, 5, 1], [16, 6, 2], [18, 4, 6],
+    [24, 3, 3], [27, 4, 1], [28, 5, 2], [30, 4, 2], [33, 2, 3],
+    [36, 1, 2], [39, 2, 1], [40, 1, 2], [42, -1, 3], [45, 0, 3],
+  ];
+  const MENU_MELODY = [
+    [0, 4, 6], [6, 5, 3], [9, 4, 3],
+    [12, 2, 6], [18, 1, 3], [21, 2, 3],
+    [24, 3, 3], [27, 4, 3], [30, 5, 3], [33, 6, 3],
+    [36, 7, 9], [45, 6, 3],
+  ];
+  const MENU_MELODY_B = [
+    [0, 7, 3], [3, 6, 3], [6, 5, 3], [9, 4, 3],
+    [12, 6, 6], [18, 5, 3], [21, 4, 3],
+    [24, 3, 6], [30, 2, 3], [33, 1, 3],
+    [36, 0, 12],
   ];
 
   const SONGS = {
-    menu: { bpm: 100, sub: 2, taal: DADRA, tune: MENU_TUNE, drone: true },
-    play: { bpm: 112, sub: 2, taal: KEHERWA, tune: PLAY_TUNE, drone: false },
+    // Calm, warm home-screen groove: dholak + harmonium + bansuri
+    menu: {
+      bpm: 92, lead: 'bansuri', melodies: [MENU_MELODY, MENU_MELODY_B, null, MENU_MELODY],
+      drums(s, t, intense) {
+        if (s === 0 || s === 6) dholBass(t, s === 0 ? 0.55 : 0.4);
+        if (s === 3 || s === 9) dholTilli(t, 0.22);
+        if (s === 5 || s === 11) dholTilli(t, 0.12);
+      },
+      harm: true, tumbi: false, clap: false,
+    },
+    // Upbeat bhangra for the round: dhol chaal + claps + tumbi + harmonium lead
+    play: {
+      bpm: 118, lead: 'reed', melodies: [PLAY_MELODY, PLAY_MELODY_B],
+      drums(s, t, intense) {
+        // dhol "chaal": BOOM .. ta BOOM | BOOM .. ta BOOM (swung)
+        if (s === 0 || s === 5 || s === 6 || (intense && s === 11)) dholBass(t, s === 0 ? 0.9 : 0.7);
+        if (s === 2 || s === 3 || s === 8 || s === 9) dholTilli(t, s % 3 === 0 ? 0.35 : 0.2);
+        if (intense && (s === 1 || s === 7 || s === 10)) dholTilli(t, 0.15);
+      },
+      harm: true, tumbi: true, clap: true,
+    },
   };
 
-  function playTaalStroke(s, t, vol) {
-    switch (s) {
-      case 'DHA': case 'DHI': tablaBayan(t, 0.6 * vol); tablaDayan(t, 1, 0.45 * vol); break;
-      case 'ge': tablaBayan(t, 0.45 * vol); break;
-      case 'NA': tablaDayan(t, 1, 0.45 * vol); break;
-      case 'TU': tablaDayan(t, 0.75, 0.4 * vol); break;
-      case 'na': tablaDayan(t, 1, 0.25 * vol); break;
-      case 'ti': case 'ka': tablaDayan(t, 1.5, 0.18 * vol); break;
+  function scheduleStep(song, i, t, stepDur) {
+    const s = i % 12, bar = Math.floor(i / 12) % 4, loop = Math.floor(i / 48), pos = i % 48;
+    song.drums(s, t, song.intense);
+    if (song.clap && (s === 3 || s === 9)) clap(t, 0.22);
+    if (s === 0) {
+      const chord = CHORDS[bar].map(d => kz(d, -1));
+      if (song.harm) harmonium(chord, t, stepDur * 12 * 0.98, song.lead === 'reed' ? 0.045 : 0.06);
+      bass(kz(ROOTS[bar], -2), t, stepDur * 5);
+    }
+    if (s === 6) bass(kz(ROOTS[bar] + 4, -2), t, stepDur * 5, 0.2);
+    if (song.tumbi && [0, 2, 3, 5, 6, 8, 9, 11].includes(s)) {
+      tumbi(kz(s % 6 === 0 ? 7 : (s % 3 === 0 ? 4 : 7), 1), t, s % 6 === 0 ? 0.13 : 0.08);
+    }
+    const mel = song.melodies[loop % song.melodies.length];
+    if (mel) {
+      for (const [st, deg, len] of mel) {
+        if (st === pos) {
+          const f = kz(deg, song.lead === 'bansuri' ? 1 : 0);
+          const opts = {};
+          if (len >= 3 && Math.random() < 0.5) opts.kan = kz(deg + 1, song.lead === 'bansuri' ? 1 : 0);
+          else if (Math.random() < 0.35) opts.glide = true;
+          song.leadVoice.note(f, t, stepDur * len, opts);
+        }
+      }
     }
   }
 
   function scheduler() {
     const song = A._song; if (!song) return;
-    const stepDur = 60 / song.bpm / song.sub;
+    const stepDur = 60 / (song.bpm * (song.intense ? 1.12 : 1)) / 3;
     while (A._nextTime < A.ctx.currentTime + 0.15) {
-      const t = A._nextTime, i = A._step;
-      const tempoBoost = song.intense ? 1 : 0;
-      playTaalStroke(song.taal[i % song.taal.length], t, 1 + tempoBoost * 0.2);
-      const note = song.tune[i % song.tune.length];
-      if (note !== null && note !== undefined) {
-        // light variation each cycle so it doesn't get monotonous
-        const cycle = Math.floor(i / song.tune.length);
-        const v = (cycle % 2 === 1 && Math.random() < 0.25) ? note + (Math.random() < 0.5 ? 1 : -1) : note;
-        sitar(hz(v), t, 0.3);
-      }
-      A._nextTime += stepDur / (song.intense ? 1.18 : 1);
+      // swing: lengthen the first triplet slightly for a bouncy feel
+      const s = A._step % 3;
+      const swing = s === 0 ? 1.06 : s === 1 ? 0.94 : 1;
+      scheduleStep(song, A._step, A._nextTime, stepDur);
+      A._nextTime += stepDur * swing;
       A._step++;
     }
   }
@@ -218,22 +327,24 @@
     A.stopSong();
     const s = SONGS[name]; if (!s) return;
     A._song = Object.assign({ name, intense: false }, s);
+    A._song.leadVoice = makeLead(s.lead);
     A._step = 0; A._nextTime = A.ctx.currentTime + 0.08;
-    drone(!!s.drone);
     A._timer = setInterval(scheduler, 25);
   };
   A.setIntense = function (on) { if (A._song) A._song.intense = on; };
   A.stopSong = function () {
-    clearInterval(A._timer); A._timer = null; A._song = null;
-    if (A.ctx) drone(false);
+    clearInterval(A._timer); A._timer = null;
+    if (A._song && A._song.leadVoice) A._song.leadVoice.stop();
+    A._song = null;
   };
+  A._harmonium = (degs, t, dur, vol) => harmonium(degs.map(d => kz(d)), t, dur, vol, A.sfxBus);
 
   /* ---------- SFX ---------- */
   A.sfx = {
     tap() {
       if (!A.ctx) return; const t = A.ctx.currentTime; tablaDayan(t, 1.3, 0.25, A.sfxBus);
     },
-    // Temple bell (ghanti) + rising sitar arpeggio
+    // Temple bell (ghanti) + harmonium "ta-daa"
     correct() {
       if (!A.ctx) return; const t = A.ctx.currentTime;
       [1, 2.76, 5.4, 8.93].forEach((r, i) => {
@@ -242,7 +353,7 @@
         g.gain.setValueAtTime(0.22 / (i + 1), t); g.gain.exponentialRampToValueAtTime(0.0005, t + 1.2 / (i * 0.5 + 1));
         o.connect(g); out(g, A.sfxBus, 0.5); o.start(t); o.stop(t + 1.3);
       });
-      [0, 2, 4, 7].forEach((d, i) => sitar(hz(d, 1), t + i * 0.06, 0.32, 1.2, A.sfxBus));
+      A._harmonium([7, 9, 11], t + 0.02, 0.22, 0.07); A._harmonium([9, 11, 14], t + 0.2, 0.4, 0.07);
     },
     // Whoosh down + low tabla
     pass() {
@@ -261,7 +372,7 @@
     count(n) {
       if (!A.ctx) return; const t = A.ctx.currentTime;
       if (n > 0) { dhol(t, 0.7); tablaDayan(t, 1, 0.4, A.sfxBus); }
-      else { dhol(t, 1); dhol(t + 0.12, 0.8); [0, 4, 7, 9].forEach((d, i) => sitar(hz(d, 1), t + i * 0.05, 0.3, 1.2, A.sfxBus)); }
+      else { dhol(t, 1); dhol(t + 0.12, 0.8); A._harmonium([0, 2, 4, 7], t, 0.6, 0.06); }
     },
     // Shankh (conch) — time's up
     shankh() {

@@ -104,6 +104,11 @@
         <div><b class="g">⬇ Tilt down</b><span>Sahi! (correct)</span></div>
         <div><b class="o">⬆ Tilt up</b><span>Pass</span></div>
       </div>
+      <div class="key-legend" style="display:none">
+        <div><kbd>Space</kbd> or <kbd>→</kbd><span>Sahi! (correct)</span></div>
+        <div><kbd>P</kbd> or <kbd>←</kbd><span>Pass</span></div>
+        <div><kbd>Esc</kbd><span>End round</span></div>
+      </div>
       <button class="btn big primary" id="btnStartNow">Start now</button>
       <p class="hint" id="readyHint"></p>
     </div>
@@ -123,8 +128,8 @@
       </div>
       <div class="timer-bar"><i id="timerBar"></i></div>
       <div class="tap-controls" id="tapControls">
-        <button class="tap pass" id="tapPass">⬆ Pass</button>
-        <button class="tap correct" id="tapCorrect">Sahi! ✓</button>
+        <button class="tap pass" id="tapPass">⏭ Pass <kbd class="k">P / ←</kbd></button>
+        <button class="tap correct" id="tapCorrect">Sahi! ✓ <kbd class="k">Space / →</kbd></button>
       </div>
       <button class="quit" id="btnQuit" aria-label="End round">✕</button>
       <div class="flash" id="flash"><span id="flashText"></span></div>
@@ -189,7 +194,7 @@
         <li><b>Stuck?</b> Tilt your head back — screen to the ceiling — to pass. ⏭</li>
         <li>Most correct answers before the timer ends wins. Pass the phone and take turns!</li>
       </ol>
-      <p class="small-note">On iPhone, tap “Allow” when asked for motion access. If your phone has no motion sensor, the game shows tap buttons instead (handy for a friend to hold). On a laptop: ↓ / → = correct, ↑ / ← = pass.</p>
+      <p class="small-note">On iPhone, tap “Allow” when asked for motion access. If your phone has no motion sensor, the game shows tap buttons instead (handy for a friend to hold). On a laptop: the guesser turns their back to the screen; friends press Space (correct) or P (pass).</p>
     </div>
   </div>
 
