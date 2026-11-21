@@ -60,15 +60,10 @@ python3 -m http.server 8000
 Then open http://localhost:8000. To use the **motion sensor on a phone** the page must be served over
 **HTTPS** (browsers block sensors on plain http, except localhost).
 
-## Put it online (free) — GitHub Pages
+## Live
 
-This repo includes `.github/workflows/pages.yml`.
-
-1. Merge into `main`.
-2. In GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-3. Every push to `main` deploys to `https://<your-username>.github.io/headsup/`.
-
-(Netlify / Vercel / Cloudflare Pages also work: just point them at the repo root, no build step.)
+Play it at **https://oshal7.github.io/headsup/**. It's hosted by GitHub Pages (Settings → Pages → Deploy from a branch → `main` / root);
+every push to `main` goes live in about a minute.
 
 ## Adding cards
 
