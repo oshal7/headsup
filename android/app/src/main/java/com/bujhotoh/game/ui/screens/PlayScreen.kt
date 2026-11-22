@@ -105,7 +105,7 @@ fun PlayScreen(vm: GameViewModel) {
     ) {
         SunRays()
         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            TopBar(vm, "${deck.emoji} ${deck.title}")
+            TopBar(vm, deck.title)
             WordArea(vm, Modifier.weight(1f).fillMaxWidth())
             TimerBar(if (vm.totalMs > 0) vm.remainingMs / vm.totalMs.toFloat() else 1f)
         }
@@ -170,6 +170,7 @@ private fun WordArea(vm: GameViewModel, modifier: Modifier) {
             val how = when (card.mode) {
                 ClueMode.ACT -> stringResource(R.string.hint_act)
                 ClueMode.HUM -> stringResource(R.string.hint_hum)
+                ClueMode.SOUND -> stringResource(R.string.hint_sound)
                 ClueMode.SAY -> ""
             }
             val hint = listOf(card.source, how).filter { it.isNotEmpty() }.joinToString(" · ")

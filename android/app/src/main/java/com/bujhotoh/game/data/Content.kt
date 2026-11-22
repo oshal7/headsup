@@ -5,7 +5,7 @@ import org.json.JSONObject
 
 /** How clue-givers should give clues. The hint text itself is a string resource (see ui/Text.kt). */
 enum class ClueMode(val key: String) {
-    SAY("say"), ACT("act"), HUM("hum");
+    SAY("say"), ACT("act"), HUM("hum"), SOUND("sound");
 
     companion object {
         fun from(key: String?): ClueMode = entries.firstOrNull { it.key == key } ?: SAY
@@ -18,6 +18,9 @@ data class Region(val id: String, val name: String, val flag: String) {
 
     companion object { const val WORLD = "world" }
 }
+
+/** A home-screen shelf, e.g. "Party Classics". */
+data class Group(val id: String, val name: String, val desc: String = "")
 
 /**
  * A category such as Animals or Movies. Universal categories only have the "world" variant;
@@ -33,6 +36,8 @@ data class Category(
     val mode: ClueMode,
     /** region id -> cards, in the order regions are listed in the content file. */
     val variants: Map<String, List<String>>,
+    /** Which [Group] (home-screen shelf) it belongs to. */
+    val group: String = "",
 ) {
     val isUniversal: Boolean get() = variants.keys == setOf(Region.WORLD)
 }
@@ -59,7 +64,10 @@ data class Deck(
 /** One card shown during a round. [hint] is shown under the word (e.g. "Act it out"), [source] for Mix. */
 data class Card(val text: String, val mode: ClueMode, val source: String = "")
 
-data class Content(val regions: List<Region>, val categories: List<Category>) {
+data class Content(val regions: List<Region>, val categories: List<Category>, val groups: List<Group> = emptyList()) {
+    /** Categories on a home-screen shelf, in content order. */
+    fun categoriesIn(g: Group): List<Category> = categories.filter { it.group == g.id }
+
     fun region(id: String?): Region? = regions.firstOrNull { it.id == id }
 
     /** Regions this category can be played in, in content order. */
@@ -90,7 +98,7 @@ data class Content(val regions: List<Region>, val categories: List<Category>) {
     fun mixCards(home: String?): List<Card> = categories.flatMap { c ->
         listOfNotNull(c.variants[Region.WORLD]?.let { region(Region.WORLD) }, home?.takeIf { it != Region.WORLD }?.let { h ->
             c.variants[h]?.let { region(h) }
-        }).flatMap { r -> c.variants[r.id].orEmpty().map { Card(it, c.mode, "${c.emoji} ${c.name}" + if (r.isWorld) "" else " ${r.flag}") } }
+        }).flatMap { r -> c.variants[r.id].orEmpty().map { Card(it, c.mode, c.name + if (r.isWorld) "" else " ${r.flag}") } }
     }.distinctBy { it.text }
 
     /** Cards for a deck. */
@@ -115,10 +123,14 @@ data class Content(val regions: List<Region>, val categories: List<Category>) {
                         id = o.getString("id"), name = o.getString("name"), emoji = o.getString("emoji"),
                         colorStart = Decks.parseColor(colors.getString(0)), colorEnd = Decks.parseColor(colors.getString(1)),
                         desc = o.optString("desc"), mode = ClueMode.from(o.optString("mode")), variants = variants,
+                        group = o.optString("group"),
                     )
                 }
             }
-            return Content(regions, cats)
+            val groups = root.optJSONArray("groups")?.let { a ->
+                (0 until a.length()).map { i -> a.getJSONObject(i).let { Group(it.getString("id"), it.getString("name"), it.optString("desc")) } }
+            }.orEmpty()
+            return Content(regions, cats, groups)
         }
     }
 }

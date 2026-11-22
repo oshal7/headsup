@@ -4,20 +4,23 @@
   and translate the values. Card content lives in assets/content.json.
 -->
 <resources>
-    <string name="app_name">Bujho Toh!</string>
+    <string name="app_name">Headzy</string>
 
     <!-- Home -->
-    <string name="tagline">The forehead guessing game</string>
-    <string name="tagline_sub">Phone on your forehead. Friends give clues. Nod if you got it!</string>
     <string name="how_to_play">How to play</string>
     <string name="settings">Settings</string>
-    <string name="section_everyone">For everyone</string>
-    <string name="section_countries">Pick a country</string>
-    <string name="section_your_decks">Your decks</string>
+    <string name="section_your_decks">Your Decks</string>
+    <string name="decks_count">%1$d decks</string>
+    <string name="quick_play">Quick play</string>
+    <string name="mix_sub">%1$s cards from every deck, shuffled</string>
+    <string name="tag_act">Act</string>
+    <string name="tag_hum">Hum</string>
+    <string name="tag_sound">Sound</string>
+    <string name="make_deck_card_sub">Family, friends, office…</string>
     <string name="cards_count">%1$d cards</string>
     <string name="badge_yours">YOURS</string>
-    <string name="make_deck">➕ Make your own deck</string>
-    <string name="make_deck_sub">Inside jokes, family, office…</string>
+    <string name="make_deck">New deck</string>
+    <string name="make_deck_sub">Make a deck of your own inside jokes</string>
     <string name="footer">No ads · No tracking · Made with ❤️</string>
     <string name="mix_name">Mix It Up</string>
     <string name="mix_desc">A bit of everything, including cards from your home country.</string>
@@ -74,6 +77,7 @@
     </string-array>
     <string name="hint_act">🎭 Act it out, no talking!</string>
     <string name="hint_hum">🎤 Hum it, no lyrics!</string>
+    <string name="hint_sound">🔊 Make the sound, no words!</string>
     <string name="paused">⏸ Paused</string>
     <string name="seconds_left">%1$d seconds left</string>
     <string name="resume">Resume ▶</string>
@@ -88,7 +92,7 @@
     <string name="share_score">Share score</string>
     <string name="choose_another">Choose another deck</string>
     <string name="share_title">Share your score</string>
-    <string name="share_text">I got %1$d right in \"%2$s\" on Bujho Toh! 🎉 Can you beat me?\n%3$s</string>
+    <string name="share_text">I got %1$d right in \"%2$s\" on Headzy! 🎉 Can you beat me?\n%3$s</string>
     <string-array name="result_tier_0">
         <item>Warm-up round! 😅</item>
         <item>Oops! 😅</item>
@@ -139,11 +143,11 @@
     <!-- How to play -->
     <string name="how_title">How to play</string>
     <string name="how_1_t">Pick a deck</string>
-    <string name="how_1_b">Animals, movies, food… For country decks, pick a flag.</string>
+    <string name="how_1_b">Animals, movies, charades… Movie, music and TV decks let you pick a country.</string>
     <string name="how_2_t">Phone on your forehead</string>
     <string name="how_2_b">Sideways, screen facing your friends. No peeking! 🙈</string>
     <string name="how_3_t">Friends give clues</string>
-    <string name="how_3_b">Talk, act or hum. Each deck tells them how.</string>
+    <string name="how_3_b">Talk, act, hum or make the sound. Each deck tells them how.</string>
     <string name="how_4_t">Got it? Nod down</string>
     <string name="how_4_b">Tip the screen towards the floor. ✅</string>
     <string name="how_5_t">Stuck? Tilt your head back</string>
@@ -161,6 +165,7 @@
     <string name="mode_say">🗣 Talk</string>
     <string name="mode_act">🎭 Act</string>
     <string name="mode_hum">🎤 Hum</string>
+    <string name="mode_sound">🔊 Sound</string>
     <string name="save_deck">Save deck</string>
     <string name="custom_desc">Your very own deck.</string>
     <string name="err_name">Give your deck a name 🙂</string>

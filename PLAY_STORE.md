@@ -1,4 +1,4 @@
-# Publishing Bujho Toh! on Google Play
+# Publishing Headzy on Google Play
 
 Everything is built by **GitHub Actions** (`.github/workflows/android.yml`). You never need
 Android Studio or the Android SDK.
@@ -19,7 +19,7 @@ Or from GitHub Actions:
 2. Under **Artifacts**, download **BujhoToh-debug-apk** (a zip) and unzip it on your phone.
 3. Tap the `.apk`. Android will ask you to allow installing from this source → allow → **Install**.
 
-The debug build is called "Bujho Toh!" too, but it installs alongside the Play version (its ID ends in `.debug`).
+The debug build is called "Headzy" too, but it installs alongside the Play version (its ID ends in `.debug`).
 
 To rebuild at any time: **Actions → Android app → Run workflow**.
 
@@ -78,11 +78,15 @@ For a named version, push a tag such as `v1.0.0` and a GitHub Release is created
       before they can publish to everyone. Start this as early as possible: family and friends with Android phones.
 
 ### Create the app
-- App name: **Bujho Toh!**
+- App name (store title, max 30 characters): **Headzy: Charades Party Game**
+  (the brand is "Headzy"; "Charades Party Game" puts the words people actually search for into the title.
+  The name on the phone's home screen is just "Headzy".)
 - Default language: English (United States) – en-US (add en-IN / en-GB listings later if you like)
 - App or game: **Game** · Free
 - Package name (set by the build, permanent): **`com.bujhotoh.game`**
-  *(Want a different one? Tell me before the first upload; it can never change afterwards.)*
+  *(It still carries the old name. It shows in the Play Store URL only. If nothing has been uploaded to
+  Play Console yet, change `applicationId` in `android/app/build.gradle.kts` to e.g. `com.headzy.game`
+  before the first upload; it can never change afterwards.)*
 
 ### App content (Policy section)
 | Item | Answer |
@@ -101,33 +105,33 @@ For a named version, push a tag such as `v1.0.0` and a GitHub Release is created
 ### Store listing
 - **Category:** Games → Word (or Casual)
 - **Tags:** Party, Word, Trivia, Family
-- **App icon:** `android/store/icon-512.png`
+- **App icon:** `android/store/icon-512.png` (the Headzy buddy with a phone on its head and tilt arrows)
 - **Feature graphic:** `android/store/feature-graphic-1024x500.png`
-- **Phone screenshots (2–8):** take them on your phone with the installed app (power + volume-down):
-  the home screen, a deck, the "phone on forehead" screen, a card mid-round, the green "Sahi!" flash and the results.
-  Normal phone screenshots meet Play's size rules.
+- **Phone screenshots:** `android/store/screenshots/` (1080×1920, ready to upload in order 1 → 6)
 - **Contact email:** required (shown publicly), so use one you're happy to share.
+
+**App name / title** (max 30): `Headzy: Charades Party Game`
 
 **Short description** (max 80 characters):
 
-> Party guessing game! Phone on your forehead, friends give clues, nod to answer.
+> Phone on your forehead, friends give clues, tilt to guess! The party word game.
 
 **Full description** (paste as is; edit freely):
 
-> Put the phone on your forehead, let your friends give clues, and guess the word before time runs out! 📱🤯
+> Headzy is the phone-on-your-forehead guessing game for parties, family nights and road trips! 📱🤯
 >
-> ✅ Nod down when you guess it
-> ⏭ Tilt your head back to pass
+> Hold the phone to your forehead, your friends shout clues, act it out or make the sound, and you guess the word before time runs out.
+>
+> ✅ Tilt down when you guess it
+> ⏭ Tilt up to pass
 > ⏰ Most correct answers wins!
 >
-> FOR EVERYONE
-> 🐘 Animals · 🧸 Everyday things · 🍕 Food & drinks · 👩‍🚒 Jobs · 🎭 Act it out
-> ⚽ Sports · 🗺️ Famous places · 🐉 Myths & legends · 🛍️ Brands · 🧒 Easy words for kids
->
-> PICK A COUNTRY 🇮🇳 🇺🇸 🇬🇧 🇨🇳
-> 🎬 Movies · 🌟 Celebrities · 🎤 Songs (hum them!) · 📺 TV shows · 🎉 Festivals & holidays
-> 🗯️ Famous movie lines · 🍜 Local food · 🗺️ Places · and more.
-> Choose your home country and its decks come first. More countries coming!
+> 30+ DECKS, 3,000+ CARDS
+> 🎉 Party Classics: Animals, Everyday Things, Food & Drinks, Famous People, Jobs, Sports, Famous Places, Countries, Brands, Things That Go, Hobbies
+> 🎭 Act It Out: Charades, Emotions, Make the Sound, Instruments, Dance Moves
+> 🎬 Movies, Music & TV: Movies, Celebrities, Songs (hum them!), TV Shows, Famous Movie Lines. Pick India, USA, UK or China.
+> 🧸 Family Fun: Kids (Easy), Cartoons, Heroes & Villains, Fairy Tales, Games & Toys, School Days, Nature & Space, Myths & Legends
+> 🪔 Festivals & Traditions: Festivals & Holidays, Weddings, Daily Life
 >
 > MAKE YOUR OWN DECK
 > Family inside jokes, office names, your last holiday: create unlimited custom decks.
@@ -135,15 +139,18 @@ For a named version, push a tag such as `v1.0.0` and a GitHub Release is created
 > MADE FOR GAME NIGHTS
 > • Smooth tilt controls using your phone's gyroscope
 > • Pauses by itself if you put the phone down, and carries on when it's back on a forehead
-> • Pauses for phone calls; volume buttons control the game
 > • Fun haptics, sounds and confetti; three music styles
 > • 30 s, 60 s, 90 s or 2 min rounds and a best score for every deck
 > • Cards don't repeat until you've seen the whole deck
 >
 > 100% free. No ads. No sign-up. No internet needed. Nothing is collected.
 
+**Search keywords to keep in the description** (Play has no keyword field; it reads the title and description):
+charades, forehead game, guess the word, party game, heads up style game, family game, word game, act it out, who am I.
+(Writing "heads up" in lowercase as a description of the gameplay is common; never use "Heads Up!" as a name or in the title.)
+
 ### Content cautions (avoid rejections)
-- Don't call it "Heads Up" anywhere (another company's trademark). The app and this text don't.
+- Don't call it "Heads Up!" (Warner Bros. trademark) in the title, icon or graphics. "Headzy" is a distinct name.
 - Don't use movie posters, actor photos or brand logos in screenshots or graphics. Card text is fine.
 
 ### Release flow

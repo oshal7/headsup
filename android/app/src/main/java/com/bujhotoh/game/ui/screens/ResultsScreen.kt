@@ -76,7 +76,7 @@ fun ResultsScreen(vm: GameViewModel) {
                     modifier = Modifier.graphicsLayer { scaleX = titlePop.value; scaleY = titlePop.value },
                 )
                 Text("$shown", fontSize = 96.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 96.sp)
-                Text("${stringResource(R.string.correct_count)} · ${r.deck.emoji} ${r.deck.title}", color = BujhoColors.Muted)
+                Text("${stringResource(R.string.correct_count)} · ${r.deck.title}", color = BujhoColors.Muted)
                 val sub = when {
                     r.isBest -> stringResource(R.string.new_best, r.deck.title)
                     r.previousBest > 0 -> stringResource(R.string.previous_best, r.previousBest)

@@ -56,7 +56,7 @@ fun ReadyScreen(vm: GameViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 val deck = vm.deck
-                if (deck != null) Text("${deck.emoji} ${deck.title}", color = BujhoColors.Muted, fontSize = 15.sp)
+                if (deck != null) Text(deck.title, color = BujhoColors.Muted, fontSize = 15.sp)
                 if (vm.hasSensor) {
                     Text(stringResource(R.string.ready_title), fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, lineHeight = 30.sp)
                     Text(stringResource(R.string.ready_body), color = BujhoColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp))
@@ -103,31 +103,24 @@ private fun Legend(title: String, sub: String, color: androidx.compose.ui.graphi
     }
 }
 
-/** Little animation: a phone lands on a smiling head, then nods down and tilts back. */
+/** Little animation: the Headzy buddy nods down (correct), then tilts back (pass). */
 @Composable
 private fun PhoneOnHead(modifier: Modifier) {
     val t = rememberInfiniteTransition(label = "head")
     val p by t.animateFloat(0f, 1f, infiniteRepeatable(tween(3200, easing = LinearEasing)), label = "p")
-    Box(modifier, contentAlignment = Alignment.BottomCenter) {
-        Text("🙂", fontSize = 110.sp, lineHeight = 110.sp)
-        Box(
-            Modifier
-                .align(Alignment.TopCenter)
-                .size(96.dp, 50.dp)
-                .graphicsLayer {
-                    // 0-.25 drop in, .25-.45 rest, .45-.6 nod (correct), .6-.75 rest, .75-.9 tilt back (pass)
-                    translationY = when { p < .25f -> (-60 + p / .25f * 78) * density; else -> 18 * density }
-                    alpha = if (p < .25f) p / .25f else 1f
-                    rotationX = when {
-                        p in .45f..0.6f -> kotlin.math.sin((p - .45f) / .15f * Math.PI).toFloat() * 50f
-                        p in .75f..0.9f -> -kotlin.math.sin((p - .75f) / .15f * Math.PI).toFloat() * 50f
-                        else -> 0f
-                    }
+    Box(modifier, contentAlignment = Alignment.Center) {
+        androidx.compose.foundation.Image(
+            androidx.compose.ui.res.painterResource(com.bujhotoh.game.R.drawable.mascot), contentDescription = null,
+            modifier = Modifier.size(150.dp).graphicsLayer {
+                // .15-.35 nod forward (correct), .55-.75 tilt back (pass)
+                val nod = when {
+                    p in .15f..0.35f -> kotlin.math.sin((p - .15f) / .2f * Math.PI).toFloat()
+                    p in .55f..0.75f -> -kotlin.math.sin((p - .55f) / .2f * Math.PI).toFloat()
+                    else -> 0f
                 }
-                .clip(RoundedCornerShape(10.dp))
-                .background(Brush.linearGradient(listOf(BujhoColors.Pink, BujhoColors.Saffron)))
-                .border(3.dp, BujhoColors.Deep, RoundedCornerShape(10.dp)),
-            contentAlignment = Alignment.Center,
-        ) { Text("?", fontWeight = FontWeight.ExtraBold, fontSize = 26.sp) }
+                rotationX = nod * 35f
+                translationY = nod * 10f * density
+            },
+        )
     }
 }
