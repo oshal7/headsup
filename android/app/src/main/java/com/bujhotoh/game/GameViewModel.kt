@@ -294,6 +294,10 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { delay(2500); if (screen == Screen.RESULTS) sounds.playMusic(MusicRole.MENU) }
     }
 
+    /** Ends the running round immediately, as if the clock ran out (used by screenshot tests). */
+    @androidx.annotation.VisibleForTesting
+    internal fun finishRoundNow() { if (running) { gameJob?.cancel(); timeUp() } }
+
     fun requestQuit() { if (running || countdown != null) confirmQuit = true else goHome() }
     fun dismissQuit() { confirmQuit = false }
 

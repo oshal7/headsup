@@ -137,6 +137,7 @@ jobs:
       - name: Install Android SDK packages
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.1.0" > /dev/null
       - name: Run tests
+        timeout-minutes: 15
         run: ./gradlew :app:testDebugUnitTest
       - name: Upload screenshots
         if: always()

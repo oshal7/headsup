@@ -83,7 +83,7 @@ class ScreenshotTest {
             sc.onActivity { vm.answer(true) }
             idle(900)
             assertEquals(2, vm.score)
-            idle(61_000) // let the clock run out
+            sc.onActivity { vm.finishRoundNow() } // skip waiting out the clock
             idle(2_000)
             assertEquals(Screen.RESULTS, vm.screen)
             shoot(sc, "09-results")
