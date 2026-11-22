@@ -4,8 +4,10 @@
     <!-- Haptic feedback for correct / pass / time up. No other permissions: no internet, no data collection. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
-    <!-- Tilt controls use these sensors, but the game also works with tap buttons, so they are optional. -->
-    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
+    <!-- The game is played by tilting the phone, so Google Play only offers it to devices with an accelerometer.
+         A gyroscope is used when present (smoother, detects "held still") but isn't required. -->
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
+    <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <application

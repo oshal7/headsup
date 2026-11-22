@@ -1,4 +1,175 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  All UI text. To add a language, copy this file to values-<lang>/strings.xml (e.g. values-fr)
+  and translate the values. Card content lives in assets/content.json.
+-->
 <resources>
     <string name="app_name">Bujho Toh!</string>
+
+    <!-- Home -->
+    <string name="tagline">The forehead guessing game</string>
+    <string name="tagline_sub">Phone on your forehead. Friends give clues. Nod if you got it!</string>
+    <string name="how_to_play">How to play</string>
+    <string name="settings">Settings</string>
+    <string name="section_everyone">For everyone</string>
+    <string name="section_countries">Pick a country</string>
+    <string name="section_your_decks">Your decks</string>
+    <string name="cards_count">%1$d cards</string>
+    <string name="badge_yours">YOURS</string>
+    <string name="make_deck">➕ Make your own deck</string>
+    <string name="make_deck_sub">Inside jokes, family, office…</string>
+    <string name="footer">No ads · No tracking · Made with ❤️</string>
+    <string name="mix_name">Mix It Up</string>
+    <string name="mix_desc">A bit of everything, including cards from your home country.</string>
+
+    <!-- Welcome / region -->
+    <string name="welcome_title">Where are you playing from?</string>
+    <string name="welcome_body">We\'ll show movies, celebrities, food and more from your country first. You can always pick another country.</string>
+    <string name="somewhere_else">Somewhere else</string>
+    <string name="lets_go">Let\'s go!</string>
+    <string name="which_country">Which country?</string>
+    <string name="home_country">🏠 Home country</string>
+
+    <!-- Deck sheet -->
+    <string name="best_score">🏆 Best: %1$d</string>
+    <string name="round_time">Round time</string>
+    <string name="two_min">2 min</string>
+    <string name="seconds_short">%1$ds</string>
+    <string name="play">Play ▶</string>
+    <string name="edit_deck">✏️ Edit deck</string>
+    <string name="delete">🗑 Delete</string>
+    <string name="delete_title">Delete \"%1$s\"?</string>
+    <string name="delete_body">This can\'t be undone.</string>
+    <string name="delete_confirm">Delete</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Ready -->
+    <string name="back">Back</string>
+    <string name="ready_title">Put the phone on your forehead!</string>
+    <string name="ready_body">Hold it sideways, screen facing your friends. The game starts by itself.</string>
+    <string name="legend_correct">⬇ Nod down</string>
+    <string name="legend_correct_sub">Correct</string>
+    <string name="legend_pass">⬆ Tilt back</string>
+    <string name="legend_pass_sub">Pass</string>
+    <string name="hold_still">Perfect, hold still… 🙂</string>
+    <string name="waiting_forehead">Waiting for the phone on your forehead…</string>
+    <string name="start_now">Start now</string>
+    <string name="sensor_in_use">Sensor: %1$s</string>
+    <string name="no_sensor_title">Motion sensor needed</string>
+    <string name="no_sensor_body">This game is played by tilting your phone, but no motion sensor was found on this device.</string>
+
+    <!-- Play -->
+    <string name="go">Go!</string>
+    <string name="end_round">End round</string>
+    <string name="end_round_title">End this round?</string>
+    <string name="end_round_body">Your score for this round won\'t be saved.</string>
+    <string name="keep_playing">Keep playing</string>
+    <string name="flash_pass">Pass ⏭</string>
+    <string name="flash_time_up">Time\'s up! ⏰</string>
+    <string-array name="flash_correct">
+        <item>Correct! ✓</item>
+        <item>Got it! ✓</item>
+        <item>Nice! ✓</item>
+        <item>Yes! ✓</item>
+    </string-array>
+    <string name="hint_act">🎭 Act it out, no talking!</string>
+    <string name="hint_hum">🎤 Hum it, no lyrics!</string>
+    <string name="paused">⏸ Paused</string>
+    <string name="seconds_left">%1$d seconds left</string>
+    <string name="resume">Resume ▶</string>
+    <string name="off_forehead_title">📱 Back on your forehead!</string>
+    <string name="off_forehead_body">The game paused because the phone isn\'t on a forehead. Put it back and it continues by itself.</string>
+
+    <!-- Results -->
+    <string name="correct_count">correct</string>
+    <string name="new_best">🏆 New best for %1$s!</string>
+    <string name="previous_best">Best: %1$d</string>
+    <string name="play_again">Play again 🔁</string>
+    <string name="share_score">Share score</string>
+    <string name="choose_another">Choose another deck</string>
+    <string name="share_title">Share your score</string>
+    <string name="share_text">I got %1$d right in \"%2$s\" on Bujho Toh! 🎉 Can you beat me?\n%3$s</string>
+    <string-array name="result_tier_0">
+        <item>Warm-up round! 😅</item>
+        <item>Oops! 😅</item>
+        <item>Next time! 😅</item>
+    </string-array>
+    <string-array name="result_tier_1">
+        <item>Nice! 👍</item>
+        <item>Not bad! 👍</item>
+        <item>Good going! 👍</item>
+    </string-array>
+    <string-array name="result_tier_2">
+        <item>Brilliant! 🎉</item>
+        <item>Amazing! 🎉</item>
+        <item>Well played! 🎉</item>
+    </string-array>
+    <string-array name="result_tier_3">
+        <item>Superstar! 🌟</item>
+        <item>Legendary! 🔥</item>
+        <item>Unstoppable! 🔥</item>
+    </string-array>
+
+    <!-- Settings -->
+    <string name="music">🎵 Music</string>
+    <string name="music_style">🎶 Music style</string>
+    <string name="style_chill">Chill</string>
+    <string name="style_classic">Classic</string>
+    <string name="style_party">Party</string>
+    <string name="sound_effects">🔔 Sound effects</string>
+    <string name="vibration">📳 Vibration</string>
+    <string name="tilt_sensitivity">📐 Tilt sensitivity</string>
+    <string name="sens_low">Low</string>
+    <string name="sens_medium">Medium</string>
+    <string name="sens_high">High</string>
+    <string name="tilt_sensor">🧭 Tilt sensor</string>
+    <string name="test_tilt">Test my tilt sensor</string>
+    <string name="stop_test">Stop test</string>
+    <string name="using_sensor">Using: %1$s</string>
+    <string name="waiting_sensor">Waiting for sensor…</string>
+    <string name="zone_correct">✅ CORRECT zone: screen to the floor</string>
+    <string name="zone_pass">⏭ PASS zone: screen to the ceiling</string>
+    <string name="zone_neutral">🙂 Neutral</string>
+    <string name="zone_off">📱 Not on a forehead (flat or upright)</string>
+    <string name="held_steady">Held steady ✓</string>
+    <string name="moving">Moving…</string>
+    <string name="reset_seen">Reset \"already seen\" cards</string>
+    <string name="reset_done">Done, all cards are fresh again ✨</string>
+
+    <!-- How to play -->
+    <string name="how_title">How to play</string>
+    <string name="how_1_t">Pick a deck</string>
+    <string name="how_1_b">Animals, movies, food… For country decks, pick a flag.</string>
+    <string name="how_2_t">Phone on your forehead</string>
+    <string name="how_2_b">Sideways, screen facing your friends. No peeking! 🙈</string>
+    <string name="how_3_t">Friends give clues</string>
+    <string name="how_3_b">Talk, act or hum. Each deck tells them how.</string>
+    <string name="how_4_t">Got it? Nod down</string>
+    <string name="how_4_b">Tip the screen towards the floor. ✅</string>
+    <string name="how_5_t">Stuck? Tilt your head back</string>
+    <string name="how_5_b">Screen towards the ceiling to pass. ⏭</string>
+    <string name="how_6_t">Most correct answers wins</string>
+    <string name="how_6_b">Pass the phone and take turns!</string>
+    <string name="how_note">Put the phone down or hold it like a normal phone and the game pauses until it\'s back on a forehead.</string>
+
+    <!-- Custom deck editor -->
+    <string name="custom_title_new">Make your own deck</string>
+    <string name="custom_title_edit">Edit deck</string>
+    <string name="custom_body">Inside jokes, family names, office stuff, anything! One card per line (at least 5).</string>
+    <string name="custom_name">Deck name</string>
+    <string name="custom_cards">Cards, one per line</string>
+    <string name="mode_say">🗣 Talk</string>
+    <string name="mode_act">🎭 Act</string>
+    <string name="mode_hum">🎤 Hum</string>
+    <string name="save_deck">Save deck</string>
+    <string name="custom_desc">Your very own deck.</string>
+    <string name="err_name">Give your deck a name 🙂</string>
+    <string name="err_cards">Add at least 5 cards (you have %1$d).</string>
+
+    <!-- Sensor names -->
+    <string name="sensor_fused">Gyroscope + accelerometer (fused)</string>
+    <string name="sensor_gyro_gravity">Gyroscope + gravity</string>
+    <string name="sensor_gravity">Gravity sensor</string>
+    <string name="sensor_accel">Accelerometer only</string>
+    <string name="sensor_none">No motion sensor</string>
 </resources>

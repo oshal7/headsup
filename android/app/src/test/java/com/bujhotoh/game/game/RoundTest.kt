@@ -1,6 +1,7 @@
 package com.bujhotoh.game.game
 
 import com.bujhotoh.game.data.Card
+import com.bujhotoh.game.data.ClueMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -9,7 +10,7 @@ import org.junit.Test
 import kotlin.random.Random
 
 class RoundTest {
-    private val cards = (1..40).map { Card("Word $it", "") }
+    private val cards = (1..40).map { Card("Word $it", ClueMode.SAY) }
 
     @Test fun `scores correct answers and records passes`() {
         val r = Round(cards, emptySet(), Random(1))
@@ -25,7 +26,7 @@ class RoundTest {
         val r = Round(cards, emptySet(), Random(2))
         val a = r.next()
         r.timeUp()
-        assertEquals(Answer(a.text, correct = false, timedOut = true), r.answers.single())
+        assertEquals(Answer(a, correct = false, timedOut = true), r.answers.single())
         assertNull(r.current)
     }
 
@@ -55,8 +56,26 @@ class RoundTest {
         assertEquals(50, r.answers.size)
     }
 
-    @Test fun `result titles scale with score`() {
-        assertTrue(resultTitle(0, Random(1)).contains("😅"))
-        assertTrue(resultTitle(12, Random(1)).let { it.contains("🔥") || it.contains("🌟") })
+    @Test fun `result tiers scale with score`() {
+        assertEquals(listOf(0, 0, 1, 1, 2, 3), listOf(0, 3, 4, 7, 8, 12).map(::resultTier))
+    }
+
+    @Test fun `undo brings the last card back and puts the next one back in the queue`() {
+        val r = Round(cards, emptySet(), Random(7))
+        val a = r.next(); r.answer(false)       // a pass fired while the phone was being put down
+        val b = r.next()                        // the next card was already on screen
+        val undone = r.undoLast()
+        assertEquals(a.text, undone?.text)
+        assertEquals(a, r.current)
+        assertTrue(r.answers.isEmpty())
+        r.answer(true)
+        assertEquals(b, r.next())               // nothing skipped
+        assertEquals(1, r.score)
+    }
+
+    @Test fun `undo with nothing answered does nothing`() {
+        val r = Round(cards, emptySet(), Random(8))
+        r.next()
+        assertNull(r.undoLast())
     }
 }

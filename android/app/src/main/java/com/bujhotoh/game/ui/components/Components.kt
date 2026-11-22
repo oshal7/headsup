@@ -241,7 +241,7 @@ fun <T> ChoiceChips(options: List<T>, selected: T, label: (T) -> String, onSelec
 /** A deck tile on the home screen. */
 @Composable
 fun DeckTile(
-    name: String, hindi: String, emoji: String, cardsLabel: String, badge: String?,
+    name: String, subtitle: String, emoji: String, cardsLabel: String, badge: String?,
     colors: Pair<Color, Color>, onClick: () -> Unit, modifier: Modifier = Modifier, shineDelay: Int = 0,
 ) {
     val src = remember { MutableInteractionSource() }
@@ -273,8 +273,8 @@ fun DeckTile(
         Text(emoji, fontSize = 40.sp, modifier = Modifier.align(Alignment.TopEnd).rotate(if (pressed) 10f else 0f))
         Column(Modifier.align(Alignment.BottomStart)) {
             Text(name, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 19.sp)
-            if (hindi.isNotEmpty()) Text(hindi, fontSize = 13.sp, color = Color.White.copy(alpha = .9f))
-            Text(cardsLabel, fontSize = 12.sp, color = Color.White.copy(alpha = .85f))
+            if (subtitle.isNotEmpty()) Text(subtitle, fontSize = 15.sp, color = Color.White.copy(alpha = .95f))
+            if (cardsLabel.isNotEmpty()) Text(cardsLabel, fontSize = 12.sp, color = Color.White.copy(alpha = .85f))
         }
     }
 }

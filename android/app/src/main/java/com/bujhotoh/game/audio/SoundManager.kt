@@ -129,6 +129,11 @@ class SoundManager(context: Context) {
         player = null; playingRes = 0
     }
 
+    /** Hold the music (round paused); [playMusic] with the same role carries on from here. */
+    fun pauseMusic() {
+        player?.let { runCatching { if (it.isPlaying) it.pause() } }
+    }
+
     /** App went to background: pause and let other apps have the audio. */
     fun pause() {
         paused = true

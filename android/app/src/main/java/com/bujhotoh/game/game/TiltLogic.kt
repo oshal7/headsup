@@ -104,6 +104,26 @@ class TiltLogic(sensitivity: Sensitivity = Sensitivity.MEDIUM) {
     /** Phone upright in landscape, screen facing out, held still: i.e. resting on someone's forehead. */
     fun isOnForehead(): Boolean = hasReading && abs(up) < 0.35f && abs(vertical) > 0.7f && isSteady()
 
+    /**
+     * Clearly NOT on a forehead: lying flat (on a bed or table, screen up or down) and still,
+     * or held upright like a normal phone (portrait). A head tilted back or nodding never
+     * stays this flat for long, so callers should also require this for a second or so.
+     */
+    fun isOffForehead(): Boolean = isLyingFlat() || isHeldUpright()
+
+    /** Lying flat and still, screen up (+1) or down (-1); 0 when not lying flat. */
+    fun lyingFlatSide(): Int = when {
+        !hasReading || !isSteady() -> 0
+        up > FLAT_UP -> 1
+        up < -FLAT_UP -> -1
+        else -> 0
+    }
+
+    fun isLyingFlat(): Boolean = lyingFlatSide() != 0
+
+    /** Held upright in portrait, like reading the phone normally. */
+    fun isHeldUpright(): Boolean = hasReading && abs(vertical) < 0.4f && abs(up) < 0.6f
+
     /** Starts detection, taking the current position as neutral (if it's plausibly on a forehead). */
     fun enable() {
         val avg = if (recent.isEmpty()) 0f else recent.average().toFloat()
@@ -121,5 +141,7 @@ class TiltLogic(sensitivity: Sensitivity = Sensitivity.MEDIUM) {
         const val FLICK_RATE = 2.2f
         /** Below this rotation speed (rad/s) the phone counts as held still. */
         const val STEADY_RAD_PER_SEC = 0.8f
+        /** |up| beyond this (~64° from vertical) and still = lying flat, not a head tilt. */
+        const val FLAT_UP = 0.9f
     }
 }

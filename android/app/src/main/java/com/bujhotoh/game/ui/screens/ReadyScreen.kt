@@ -34,7 +34,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.bujhotoh.game.GameViewModel
+import com.bujhotoh.game.R
 import com.bujhotoh.game.ui.components.BigButton
 import com.bujhotoh.game.ui.components.RoundIconButton
 import com.bujhotoh.game.ui.theme.BujhoColors
@@ -42,7 +44,7 @@ import com.bujhotoh.game.ui.theme.BujhoColors
 @Composable
 fun ReadyScreen(vm: GameViewModel) {
     Box(Modifier.fillMaxSize().safeDrawingPadding()) {
-        RoundIconButton("←", "Back", vm::goHome, Modifier.padding(12.dp))
+        RoundIconButton("←", stringResource(R.string.back), vm::goHome, Modifier.padding(12.dp))
         Row(
             Modifier.fillMaxSize().padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -54,27 +56,22 @@ fun ReadyScreen(vm: GameViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 val deck = vm.deck
-                if (deck != null) Text("${deck.emoji} ${deck.name}", color = BujhoColors.Muted, fontSize = 15.sp)
-                if (vm.useTilt) {
-                    Text("Phone ko maathe pe rakho!", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, lineHeight = 30.sp)
-                    Text("Hold the phone on your forehead, screen facing your friends. The game starts by itself.",
-                        color = BujhoColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp))
+                if (deck != null) Text("${deck.emoji} ${deck.title}", color = BujhoColors.Muted, fontSize = 15.sp)
+                if (vm.hasSensor) {
+                    Text(stringResource(R.string.ready_title), fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, lineHeight = 30.sp)
+                    Text(stringResource(R.string.ready_body), color = BujhoColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp))
                     Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Legend("⬇ Nod down", "Sahi! (correct)", BujhoColors.GreenLight, Modifier.weight(1f))
-                        Legend("⬆ Tilt back", "Pass", BujhoColors.OrangeLight, Modifier.weight(1f))
+                        Legend(stringResource(R.string.legend_correct), stringResource(R.string.legend_correct_sub), BujhoColors.GreenLight, Modifier.weight(1f))
+                        Legend(stringResource(R.string.legend_pass), stringResource(R.string.legend_pass_sub), BujhoColors.OrangeLight, Modifier.weight(1f))
                     }
                     HoldStill(vm.readyProgress)
-                    BigButton("Start now", onClick = vm::startCountdown)
-                    Text("Sensor: ${vm.sensorName}", color = BujhoColors.Muted.copy(alpha = .7f), fontSize = 12.sp,
+                    BigButton(stringResource(R.string.start_now), onClick = vm::startCountdown)
+                    Text(stringResource(R.string.sensor_in_use, stringResource(vm.sensorNameRes)), color = BujhoColors.Muted.copy(alpha = .7f), fontSize = 12.sp,
                         modifier = Modifier.padding(top = 6.dp))
                 } else {
-                    Text("Tap mode", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-                    Text("A friend holds the phone and taps (or swipes) when the guesser gets it. Swipe right = correct, left = pass.",
-                        color = BujhoColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.padding(vertical = 8.dp))
-                    BigButton("Start! ▶", onClick = vm::startCountdown)
+                    Text(stringResource(R.string.no_sensor_title), fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
+                    Text(stringResource(R.string.no_sensor_body), color = BujhoColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.padding(vertical = 8.dp))
                 }
-                if (vm.readyHint.isNotEmpty()) Text(vm.readyHint, color = BujhoColors.Blush, fontSize = 14.sp,
-                    textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
                 Spacer(Modifier.height(8.dp))
             }
         }
@@ -86,7 +83,7 @@ fun ReadyScreen(vm: GameViewModel) {
 private fun HoldStill(progress: Float) {
     Column(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            if (progress > 0f) "Perfect, hold still… 🙂" else "Waiting for the phone on your forehead…",
+            stringResource(if (progress > 0f) R.string.hold_still else R.string.waiting_forehead),
             color = if (progress > 0f) BujhoColors.GreenLight else BujhoColors.Muted, fontSize = 15.sp, fontWeight = FontWeight.Bold,
         )
         Box(Modifier.fillMaxWidth().height(8.dp).padding(top = 2.dp).clip(RoundedCornerShape(99.dp)).background(BujhoColors.Card)) {

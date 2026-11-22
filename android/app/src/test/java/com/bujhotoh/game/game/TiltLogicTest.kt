@@ -131,4 +131,36 @@ class TiltLogicTest {
         assertTrue(t.isSteady())
         assertTrue(t.isOnForehead())
     }
+
+    @Test fun `phone lying flat on a bed is off the forehead`() {
+        val t = TiltLogic()
+        repeat(10) { t.onGravity(0f, 0f, g) }             // screen up
+        repeat(40) { t.onRotationSpeed(0.01f, 0.01f, 0f) }
+        assertTrue(t.isOffForehead()); assertEquals(1, t.lyingFlatSide())
+        repeat(10) { t.onGravity(0f, 0f, -g) }            // face down
+        assertEquals(-1, t.lyingFlatSide())
+    }
+
+    @Test fun `phone held like a normal phone is off the forehead`() {
+        val t = TiltLogic()
+        // landscape-locked screen, phone turned upright: gravity runs along the screen's x axis
+        repeat(10) { t.onGravity(g, 0f, 0.5f) }
+        assertTrue(t.isHeldUpright())
+        assertTrue(t.isOffForehead())
+    }
+
+    @Test fun `on the forehead, nodding or tilting back is never off the forehead`() {
+        val t = TiltLogic()
+        for (deg in listOf(0.0, 30.0, 55.0, -30.0, -55.0)) {
+            t.feed(deg)
+            assertFalse("at $deg°", t.isOffForehead())
+        }
+    }
+
+    @Test fun `flat but moving (being carried) is not treated as lying on a bed`() {
+        val t = TiltLogic()
+        repeat(10) { t.onGravity(0f, 0f, g) }
+        repeat(20) { t.onRotationSpeed(2f, 1f, 0.5f) }
+        assertFalse(t.isLyingFlat())
+    }
 }

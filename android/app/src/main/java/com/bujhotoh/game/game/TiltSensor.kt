@@ -9,6 +9,7 @@ import android.os.Build
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
+import com.bujhotoh.game.R
 
 /**
  * Reads the phone's orientation and motion and feeds [TiltLogic] in screen coordinates.
@@ -38,14 +39,14 @@ class TiltSensor(context: Context, val logic: TiltLogic) : SensorEventListener {
 
     val isAvailable: Boolean get() = orientation != null
 
-    /** Human-readable name of what's being used, shown in Settings → Test tilt. */
-    val sourceName: String
+    /** String resource naming what's being used, shown on the Ready screen and in Settings. */
+    val sourceNameRes: Int
         get() = when {
-            rotationVector != null -> "Gyroscope + accelerometer (fused)"
-            gravity != null && gyro != null -> "Gyroscope + gravity"
-            gravity != null -> "Gravity sensor"
-            accel != null -> "Accelerometer only"
-            else -> "No motion sensor"
+            rotationVector != null -> R.string.sensor_fused
+            gravity != null && gyro != null -> R.string.sensor_gyro_gravity
+            gravity != null -> R.string.sensor_gravity
+            accel != null -> R.string.sensor_accel
+            else -> R.string.sensor_none
         }
 
     fun start(context: Context) {

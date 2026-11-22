@@ -49,6 +49,12 @@ class Haptics(context: Context) {
         timings = longArrayOf(0, 12, 70, 12), amplitudes = intArrayOf(0, 150, 0, 150),
     )
 
+    /** Two soft taps: the game paused because the phone left the forehead. */
+    fun pause() = play(
+        primitives = { quickFall(0.5f).quickFall(0.5f, delayMs = 120) },
+        timings = longArrayOf(0, 40, 120, 40), amplitudes = intArrayOf(0, 100, 0, 100),
+    )
+
     /** Long-short-long: time's up, take the phone off your head. */
     fun timeUp() = play(
         primitives = { slowRise(1f).click(1f, delayMs = 60).click(1f, delayMs = 120) },

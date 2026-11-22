@@ -3,7 +3,9 @@ package com.bujhotoh.game.game
 import com.bujhotoh.game.data.Card
 import kotlin.random.Random
 
-data class Answer(val text: String, val correct: Boolean, val timedOut: Boolean = false)
+data class Answer(val card: Card, val correct: Boolean, val timedOut: Boolean = false) {
+    val text: String get() = card.text
+}
 
 /**
  * One round's card queue and answers. Pure logic, no Android.
@@ -39,24 +41,35 @@ class Round(
 
     fun answer(correct: Boolean) {
         val c = current ?: return
-        _answers += Answer(c.text, correct)
+        _answers += Answer(c, correct)
         current = null
+    }
+
+    /**
+     * Takes back the last answer (e.g. the "pass" fired while the phone was being put down on a bed).
+     * Its card becomes current again; any card already shown after it goes back on top of the queue.
+     */
+    fun undoLast(): Answer? {
+        val a = _answers.removeLastOrNull() ?: return null
+        current?.let { queue.addFirst(it) }
+        current = a.card
+        return a
     }
 
     /** Time ran out: the card on screen counts as missed. */
     fun timeUp() {
         val c = current ?: return
-        _answers += Answer(c.text, correct = false, timedOut = true)
+        _answers += Answer(c, correct = false, timedOut = true)
         current = null
     }
 
     companion object { const val MIN_FRESH = 15 }
 }
 
-/** Funny result headline by score. */
-fun resultTitle(score: Int, random: Random = Random.Default): String = when {
-    score >= 12 -> listOf("Ekdum Jhakaas! 🔥", "Kya baat hai! 🔥", "Superstar! 🌟")
-    score >= 8 -> listOf("Shabaash! 🎉", "Waah! 🎉", "Zabardast! 🎉")
-    score >= 4 -> listOf("Not bad! 👍", "Accha hai! 👍", "Chalega! 👍")
-    else -> listOf("Arre yaar! 😅", "Koi baat nahi 😅", "Agli baar pakka! 😅")
-}.random(random)
+/** 0 = warm-up, 1 = nice, 2 = brilliant, 3 = superstar. The UI picks a fun title for each tier. */
+fun resultTier(score: Int): Int = when {
+    score >= 12 -> 3
+    score >= 8 -> 2
+    score >= 4 -> 1
+    else -> 0
+}

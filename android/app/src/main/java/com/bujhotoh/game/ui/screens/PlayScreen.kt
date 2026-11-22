@@ -16,7 +16,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,8 +60,6 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -71,13 +68,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bujhotoh.game.Flash
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import com.bujhotoh.game.GameViewModel
+import com.bujhotoh.game.PauseReason
+import com.bujhotoh.game.R
+import com.bujhotoh.game.data.ClueMode
 import com.bujhotoh.game.ui.components.BigButton
 import com.bujhotoh.game.ui.components.Confetti
 import com.bujhotoh.game.ui.components.GhostButton
 import com.bujhotoh.game.ui.theme.Baloo
 import com.bujhotoh.game.ui.theme.BujhoColors
-import kotlin.math.abs
 
 @Composable
 fun PlayScreen(vm: GameViewModel) {
@@ -104,18 +105,9 @@ fun PlayScreen(vm: GameViewModel) {
     ) {
         SunRays()
         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            TopBar(vm, "${deck.emoji} ${deck.name}")
+            TopBar(vm, "${deck.emoji} ${deck.title}")
             WordArea(vm, Modifier.weight(1f).fillMaxWidth())
             TimerBar(if (vm.totalMs > 0) vm.remainingMs / vm.totalMs.toFloat() else 1f)
-            if (!vm.useTilt) {
-                Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    BigButton("⏭ Pass", { vm.answer(false) }, Modifier.weight(1f), top = BujhoColors.OrangeLight, bottom = BujhoColors.Orange,
-                        edge = Color(0xFFB54800), textColor = Color.White)
-                    BigButton("Sahi! ✓", { vm.answer(true) }, Modifier.weight(1f), top = BujhoColors.GreenLight, bottom = BujhoColors.Green,
-                        edge = Color(0xFF0A7A3F), textColor = Color.White)
-                }
-            }
         }
         Confetti(vm.celebrate)
         FlashOverlay(vm.flash)
@@ -125,10 +117,10 @@ fun PlayScreen(vm: GameViewModel) {
 
     if (vm.confirmQuit) AlertDialog(
         onDismissRequest = vm::dismissQuit,
-        title = { Text("End this round?") },
-        text = { Text("Your score for this round won't be saved.") },
-        confirmButton = { TextButton(vm::goHome) { Text("End round") } },
-        dismissButton = { TextButton(vm::dismissQuit) { Text("Keep playing") } },
+        title = { Text(stringResource(R.string.end_round_title)) },
+        text = { Text(stringResource(R.string.end_round_body)) },
+        confirmButton = { TextButton(vm::goHome) { Text(stringResource(R.string.end_round)) } },
+        dismissButton = { TextButton(vm::dismissQuit) { Text(stringResource(R.string.keep_playing)) } },
         containerColor = BujhoColors.SheetBottom,
     )
 }
@@ -162,7 +154,7 @@ private fun TopBar(vm: GameViewModel, title: String) {
         Spacer(Modifier.size(10.dp))
         Box(
             Modifier.size(38.dp).clip(CircleShape).background(Color.Black.copy(alpha = .25f))
-                .clickable(role = Role.Button, onClickLabel = "End round", onClick = vm::requestQuit),
+                .clickable(role = Role.Button, onClickLabel = stringResource(R.string.end_round), onClick = vm::requestQuit),
             contentAlignment = Alignment.Center,
         ) { Text("✕", fontSize = 18.sp) }
     }
@@ -170,23 +162,17 @@ private fun TopBar(vm: GameViewModel, title: String) {
 
 @Composable
 private fun WordArea(vm: GameViewModel, modifier: Modifier) {
-    val swipePx = with(LocalDensity.current) { 110.dp.toPx() }
-    Box(
-        modifier.pointerInput(vm.useTilt) {
-            if (vm.useTilt) return@pointerInput
-            // Tap mode: swipe right = correct, swipe left = pass (matches the buttons below).
-            var dx = 0f
-            detectHorizontalDragGestures(
-                onDragStart = { dx = 0f },
-                onDragEnd = { if (abs(dx) > swipePx) vm.answer(dx > 0) },
-            ) { _, amount -> dx += amount }
-        },
-        contentAlignment = Alignment.Center,
-    ) {
+    Box(modifier, contentAlignment = Alignment.Center) {
         val card = vm.card
         if (card != null) key(vm.cardKey) {
             val pop = remember { Animatable(0.4f) }
             LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow)) }
+            val how = when (card.mode) {
+                ClueMode.ACT -> stringResource(R.string.hint_act)
+                ClueMode.HUM -> stringResource(R.string.hint_hum)
+                ClueMode.SAY -> ""
+            }
+            val hint = listOf(card.source, how).filter { it.isNotEmpty() }.joinToString(" · ")
             Column(
                 Modifier.fillMaxSize().padding(vertical = 6.dp).graphicsLayer {
                     scaleX = pop.value.coerceAtMost(1.04f); scaleY = scaleX
@@ -206,8 +192,8 @@ private fun WordArea(vm: GameViewModel, modifier: Modifier) {
                     autoSize = TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 180.sp, stepSize = 2.sp),
                     maxLines = 3,
                 )
-                if (card.hint.isNotEmpty()) Text(
-                    card.hint, fontSize = 16.sp,
+                if (hint.isNotEmpty()) Text(
+                    hint, fontSize = 16.sp,
                     modifier = Modifier.padding(top = 6.dp).clip(CircleShape).background(Color.Black.copy(alpha = .2f)).padding(horizontal = 14.dp, vertical = 2.dp),
                 )
             }
@@ -254,10 +240,11 @@ private fun FlashOverlay(flash: Flash?) {
         }
         val stamp = remember { Animatable(2.2f) }
         LaunchedEffect(f) { stamp.snapTo(2.2f); stamp.animateTo(1f, spring(dampingRatio = 0.45f)) }
+        val praise = stringArrayResource(R.array.flash_correct)
         val text = when (f) {
-            Flash.CORRECT -> remember { listOf("Sahi! ✓", "Waah! ✓", "Correct! ✓", "Jhakaas! ✓", "Ekdum! ✓").random() }
-            Flash.PASS -> "Pass ⏭"
-            Flash.TIME_UP -> "Time up! ⏰"
+            Flash.CORRECT -> remember { praise.random() }
+            Flash.PASS -> stringResource(R.string.flash_pass)
+            Flash.TIME_UP -> stringResource(R.string.flash_time_up)
         }
         Box(
             Modifier.fillMaxSize().background(Brush.radialGradient(0f to inner, .6f to mid, 1f to outer)),
@@ -281,7 +268,7 @@ private fun CountdownOverlay(n: Int?) {
             val s = remember { Animatable(2.4f) }
             LaunchedEffect(Unit) { s.animateTo(1f, tween(280)); s.animateTo(.85f, tween(600)) }
             Text(
-                if (n == 0) "Shuru!" else "$n",
+                if (n == 0) stringResource(R.string.go) else "$n",
                 fontSize = if (n == 0) 110.sp else 200.sp, fontWeight = FontWeight.ExtraBold, color = BujhoColors.Gold,
                 style = TextStyle(shadow = Shadow(BujhoColors.Maroon, Offset(0f, 14f))),
                 modifier = Modifier.graphicsLayer { scaleX = s.value; scaleY = s.value; alpha = (2.4f - s.value).coerceIn(0f, 1f) },
@@ -292,14 +279,25 @@ private fun CountdownOverlay(n: Int?) {
 
 @Composable
 private fun PausedOverlay(vm: GameViewModel) {
-    Box(Modifier.fillMaxSize().background(BujhoColors.Deep.copy(alpha = .92f)).safeDrawingPadding(), contentAlignment = Alignment.Center) {
-        Column(Modifier.widthIn(max = 380.dp).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("⏸ Paused", fontSize = 40.sp, fontWeight = FontWeight.ExtraBold, color = BujhoColors.Gold)
-            Text("${((vm.remainingMs + 999) / 1000)} seconds left", color = BujhoColors.Muted)
+    val offForehead = vm.pauseReason == PauseReason.OFF_FOREHEAD
+    Box(Modifier.fillMaxSize().background(BujhoColors.Deep.copy(alpha = .94f)).safeDrawingPadding(), contentAlignment = Alignment.Center) {
+        Column(Modifier.widthIn(max = 460.dp).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            if (offForehead) {
+                // Gentle bob so it reads as "waiting", not "stuck".
+                val t = rememberInfiniteTransition(label = "bob")
+                val bob by t.animateFloat(0f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "b")
+                Text("📱", fontSize = 56.sp, modifier = Modifier.graphicsLayer { translationY = -bob * 18f; rotationZ = (bob - .5f) * 12f })
+                Text(stringResource(R.string.off_forehead_title), fontSize = 34.sp, fontWeight = FontWeight.ExtraBold, color = BujhoColors.Gold,
+                    textAlign = TextAlign.Center, lineHeight = 36.sp)
+                Text(stringResource(R.string.off_forehead_body), color = BujhoColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
+            } else {
+                Text(stringResource(R.string.paused), fontSize = 40.sp, fontWeight = FontWeight.ExtraBold, color = BujhoColors.Gold)
+            }
+            Text(stringResource(R.string.seconds_left, ((vm.remainingMs + 999) / 1000).toInt()), color = BujhoColors.Muted, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.heightIn(min = 16.dp))
-            BigButton("Resume ▶", vm::resumeFromPause)
+            BigButton(stringResource(R.string.resume), vm::resumeFromPause)
             Spacer(Modifier.height(10.dp))
-            GhostButton("End round", vm::goHome)
+            GhostButton(stringResource(R.string.end_round), vm::goHome)
         }
     }
 }

@@ -16,12 +16,14 @@ on:
     paths:
       - 'android/**'
       - 'js/data.js'
+      - 'content/**'
       - 'tools/**'
       - '.github/workflows/android.yml'
   pull_request:
     paths:
       - 'android/**'
       - 'js/data.js'
+      - 'content/**'
       - '.github/workflows/android.yml'
   workflow_dispatch:
 
@@ -59,12 +61,12 @@ jobs:
       - name: Install Android SDK packages
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.1.0" > /dev/null
 
-      - name: Check the app's decks match js/data.js
+      - name: Check the app's cards match content/ and js/data.js
         working-directory: .
         run: |
-          node tools/build-decks.js
-          git diff --exit-code android/app/src/main/assets/decks.json || {
-            echo "::error::decks.json is out of date. Run: node tools/build-decks.js"; exit 1; }
+          node tools/build-content.js
+          git diff --exit-code android/app/src/main/assets/content.json || {
+            echo "::error::content.json is out of date. Run: node tools/build-content.js"; exit 1; }
 
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug -PversionCode=$VERSION_CODE -PversionName=${VERSION_NAME#v}

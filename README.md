@@ -77,7 +77,7 @@ See **[PLAY_STORE.md](PLAY_STORE.md)** for the full publishing checklist and sto
 
 ## Adding cards
 
-Edit `js/data.js` (the website and the Android app share it; run `node tools/build-decks.js` to update the app's copy). Each deck is a plain object:
+**Website:** edit `js/data.js`. **Android app:** universal decks and country packs live in [`content/`](content/) (`categories.js` lists categories and which countries each has; `world.js`, `us.js`, `gb.js`, `cn.js` hold cards; India reuses `js/data.js`). After editing, run `node tools/build-content.js`. Web decks are plain objects:
 
 ```js
 { id: 'my-deck', name: 'My Deck', hindi: 'मेरा डेक', emoji: '🎉',

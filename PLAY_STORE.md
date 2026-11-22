@@ -79,7 +79,7 @@ For a named version, push a tag such as `v1.0.0` and a GitHub Release is created
 
 ### Create the app
 - App name: **Bujho Toh!**
-- Default language: English (India) – en-IN
+- Default language: English (United States) – en-US (add en-IN / en-GB listings later if you like)
 - App or game: **Game** · Free
 - Package name (set by the build, permanent): **`com.bujhotoh.game`**
   *(Want a different one? Tell me before the first upload; it can never change afterwards.)*
@@ -110,40 +110,37 @@ For a named version, push a tag such as `v1.0.0` and a GitHub Release is created
 
 **Short description** (max 80 characters):
 
-> Desi party guessing game! Phone on forehead, friends give clues, nod to answer.
+> Party guessing game! Phone on your forehead, friends give clues, nod to answer.
 
 **Full description** (paste as is; edit freely):
 
-> Maathe pe phone, dimaag mein dhamaal! 📱🤯
->
-> Bujho Toh! is the party guessing game made for India. Put the phone on your forehead, let your friends and family give you clues, and guess the word before time runs out.
+> Put the phone on your forehead, let your friends give clues, and guess the word before time runs out! 📱🤯
 >
 > ✅ Nod down when you guess it
 > ⏭ Tilt your head back to pass
 > ⏰ Most correct answers wins!
 >
-> 16 DESI DECKS, 1,190+ CARDS
-> 🎬 Bollywood movies · 🌟 Filmy stars · 🗯️ Iconic dialogues · 🎤 Hit songs (hum them!)
-> 🎭 Dumb charades · 🪔 Festivals · 💍 Shaadi season · 🍛 Khaana peena
-> 🛍️ Brands we grew up with · 🫖 Ghar ki cheezein · 🏏 Cricket · 🕌 Bharat darshan
-> 🔱 Mythology & legends · 📺 TV, OTT & comics · 🛺 Desi life · 🐘 Bachcha party
-> 🌶️ Mix Masala — everything shuffled together
+> FOR EVERYONE
+> 🐘 Animals · 🧸 Everyday things · 🍕 Food & drinks · 👩‍🚒 Jobs · 🎭 Act it out
+> ⚽ Sports · 🗺️ Famous places · 🐉 Myths & legends · 🛍️ Brands · 🧒 Easy words for kids
+>
+> PICK A COUNTRY 🇮🇳 🇺🇸 🇬🇧 🇨🇳
+> 🎬 Movies · 🌟 Celebrities · 🎤 Songs (hum them!) · 📺 TV shows · 🎉 Festivals & holidays
+> 🗯️ Famous movie lines · 🍜 Local food · 🗺️ Places · and more.
+> Choose your home country and its decks come first. More countries coming!
 >
 > MAKE YOUR OWN DECK
-> Family inside jokes, office names, your last Goa trip: create unlimited custom decks.
+> Family inside jokes, office names, your last holiday: create unlimited custom decks.
 >
 > MADE FOR GAME NIGHTS
-> • Smooth tilt controls that work on any Android phone
-> • Tap & swipe mode when a friend holds the phone
-> • Original Indian music: Chill Chai, Classic harmonium & bansuri, or Party bhangra
-> • Temple-bell for correct, shankh when time's up, marigold confetti for winners
-> • 30 s, 60 s, 90 s or 2 min rounds and best score for every deck
-> • Cards don't repeat until you've seen the deck
+> • Smooth tilt controls using your phone's gyroscope
+> • Pauses by itself if you put the phone down, and carries on when it's back on a forehead
+> • Pauses for phone calls; volume buttons control the game
+> • Fun haptics, sounds and confetti; three music styles
+> • 30 s, 60 s, 90 s or 2 min rounds and a best score for every deck
+> • Cards don't repeat until you've seen the whole deck
 >
 > 100% free. No ads. No sign-up. No internet needed. Nothing is collected.
->
-> Perfect for Diwali parties, family get-togethers, road trips, sangeet nights and lazy Sundays.
-> Bujho toh jaanein! 🎉
 
 ### Content cautions (avoid rejections)
 - Don't call it "Heads Up" anywhere (another company's trademark). The app and this text don't.
@@ -162,5 +159,5 @@ For a named version, push a tag such as `v1.0.0` and a GitHub Release is created
 - Only permission: **vibration**. No internet, no ads, no analytics.
 - Tilt detection uses the gravity sensor (`TiltLogic.kt`, unit-tested).
 - Release builds are minified with R8; native libraries are 16 KB page-size aligned.
-- Card data comes from `js/data.js` (shared with the website) via `node tools/build-decks.js`.
+- Cards come from `content/` (universal decks + country packs) and `js/data.js` (India, shared with the website) via `node tools/build-content.js`.
 - Sounds are rendered from the web game's synth engine via `node tools/render-sounds.js`.

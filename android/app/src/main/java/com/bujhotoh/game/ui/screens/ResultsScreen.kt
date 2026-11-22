@@ -39,7 +39,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import com.bujhotoh.game.GameViewModel
+import com.bujhotoh.game.R
 import com.bujhotoh.game.ui.components.BigButton
 import com.bujhotoh.game.ui.components.Confetti
 import com.bujhotoh.game.ui.components.GhostButton
@@ -63,14 +66,23 @@ fun ResultsScreen(vm: GameViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(Modifier.widthIn(max = 520.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                val titles = stringArrayResource(
+                    when (r.tier) { 3 -> R.array.result_tier_3; 2 -> R.array.result_tier_2; 1 -> R.array.result_tier_1; else -> R.array.result_tier_0 },
+                )
+                val title = remember(r) { titles.random() }
                 Text(
-                    r.title, fontSize = 46.sp, fontWeight = FontWeight.ExtraBold, color = BujhoColors.Gold, textAlign = TextAlign.Center,
+                    title, fontSize = 46.sp, fontWeight = FontWeight.ExtraBold, color = BujhoColors.Gold, textAlign = TextAlign.Center,
                     style = TextStyle(shadow = Shadow(BujhoColors.Maroon, Offset(0f, 8f))),
                     modifier = Modifier.graphicsLayer { scaleX = titlePop.value; scaleY = titlePop.value },
                 )
                 Text("$shown", fontSize = 96.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 96.sp)
-                Text("correct · ${r.deck.emoji} ${r.deck.name}", color = BujhoColors.Muted)
-                if (r.subtitle.isNotEmpty()) Text(r.subtitle, color = BujhoColors.Blush, modifier = Modifier.padding(top = 6.dp))
+                Text("${stringResource(R.string.correct_count)} · ${r.deck.emoji} ${r.deck.title}", color = BujhoColors.Muted)
+                val sub = when {
+                    r.isBest -> stringResource(R.string.new_best, r.deck.title)
+                    r.previousBest > 0 -> stringResource(R.string.previous_best, r.previousBest)
+                    else -> ""
+                }
+                if (sub.isNotEmpty()) Text(sub, color = BujhoColors.Blush, modifier = Modifier.padding(top = 6.dp))
                 Spacer(Modifier.height(12.dp))
                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color.Black.copy(alpha = .2f))) {
                     r.answers.forEach { a ->
@@ -88,14 +100,15 @@ fun ResultsScreen(vm: GameViewModel) {
                     }
                 }
                 Spacer(Modifier.height(16.dp))
-                BigButton("Phir se! 🔁", vm::playAgain)
+                BigButton(stringResource(R.string.play_again), vm::playAgain)
                 Spacer(Modifier.height(10.dp))
-                GhostButton("Share score", {
+                val shareTitle = stringResource(R.string.share_title)
+                GhostButton(stringResource(R.string.share_score), {
                     val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, vm.shareText())
-                    context.startActivity(Intent.createChooser(send, "Share your score"))
+                    context.startActivity(Intent.createChooser(send, shareTitle))
                 })
                 Spacer(Modifier.height(10.dp))
-                GhostButton("Choose another deck", vm::goHome)
+                GhostButton(stringResource(R.string.choose_another), vm::goHome)
             }
         }
         Confetti(vm.celebrate, rain = r.score >= 4)
