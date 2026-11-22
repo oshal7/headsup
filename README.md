@@ -65,9 +65,19 @@ Then open http://localhost:8000. To use the **motion sensor on a phone** the pag
 Play it at **https://oshal7.github.io/headsup/**. It's hosted by GitHub Pages (Settings → Pages → Deploy from a branch → `main` / root);
 every push to `main` goes live in about a minute.
 
+## Android app
+
+A native Android version (Kotlin + Jetpack Compose) lives in [`android/`](android/).
+It is built entirely by GitHub Actions; no Android Studio needed:
+
+- **Actions → Android app → latest run → Artifacts → `BujhoToh-debug-apk`** to install on your phone.
+- Signed `.aab` for Google Play once the signing secrets are added.
+
+See **[PLAY_STORE.md](PLAY_STORE.md)** for the full publishing checklist and store listing text.
+
 ## Adding cards
 
-Edit `js/data.js`. Each deck is a plain object:
+Edit `js/data.js` (the website and the Android app share it; run `node tools/build-decks.js` to update the app's copy). Each deck is a plain object:
 
 ```js
 { id: 'my-deck', name: 'My Deck', hindi: 'मेरा डेक', emoji: '🎉',

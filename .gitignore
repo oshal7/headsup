@@ -1,3 +1,9 @@
 .DS_Store
 node_modules/
 *.log
+
+# Android signing secrets: never commit
+*.jks
+*.keystore
+*.jks.b64
+keystore.properties

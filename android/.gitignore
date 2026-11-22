@@ -1,0 +1,11 @@
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+.kotlin/
+captures/
+# Release signing: NEVER commit these
+keystore.properties
+*.jks
+*.keystore
