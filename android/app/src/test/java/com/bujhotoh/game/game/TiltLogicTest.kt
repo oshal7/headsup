@@ -85,4 +85,50 @@ class TiltLogicTest {
     @Test fun `zero gravity reading is ignored`() {
         assertNull(TiltLogic().onGravity(0f, 0f, 0f))
     }
+
+    /** Feeds a head movement from [from]° to [to]° over [ms] milliseconds at 50 Hz, with timestamps. */
+    private fun TiltLogic.move(from: Double, to: Double, ms: Long, startNanos: Long = 1_000_000_000L): List<TiltEvent> {
+        val out = mutableListOf<TiltEvent>()
+        val steps = (ms / 20).toInt().coerceAtLeast(1)
+        for (i in 0..steps) {
+            val v = head(from + (to - from) * i / steps)
+            onGravity(v[0], v[1], v[2], startNanos + i * 20_000_000L)?.let(out::add)
+        }
+        return out
+    }
+
+    @Test fun `a quick nod counts before reaching the full angle`() {
+        val t = TiltLogic()
+        t.feed(0.0); t.enable()
+        // 27° is below the medium threshold (~33°) but done in 150 ms: a natural snappy nod
+        assertEquals(listOf(TiltEvent.CORRECT), t.move(0.0, 27.0, ms = 150))
+    }
+
+    @Test fun `a slow drift to the same angle does not count`() {
+        val t = TiltLogic()
+        t.feed(0.0); t.enable()
+        assertTrue(t.move(0.0, 27.0, ms = 2_000).isEmpty())
+    }
+
+    @Test fun `a quick head-back flick passes`() {
+        val t = TiltLogic()
+        t.feed(0.0); t.enable()
+        assertEquals(listOf(TiltEvent.PASS), t.move(0.0, -27.0, ms = 150))
+    }
+
+    @Test fun `does not count as on the forehead while the phone is moving`() {
+        val t = TiltLogic()
+        t.feed(0.0)
+        repeat(20) { t.onRotationSpeed(2.5f, 0.4f, 0.1f) }   // being waved around
+        assertFalse(t.isOnForehead())
+        repeat(40) { t.onRotationSpeed(0.05f, 0.02f, 0.01f) } // now held still
+        assertTrue(t.isOnForehead())
+    }
+
+    @Test fun `phones without a gyroscope only need the position`() {
+        val t = TiltLogic()
+        t.feed(0.0)
+        assertTrue(t.isSteady())
+        assertTrue(t.isOnForehead())
+    }
 }

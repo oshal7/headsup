@@ -154,9 +154,61 @@ private fun SettingsContent(vm: GameViewModel) {
         Spacer(Modifier.height(8.dp))
         ChoiceChips(Sensitivity.entries, s.sensitivity, { it.label }, { l -> vm.tap(); vm.updateSettings { it.copy(sensitivity = l) } })
     }
+    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Text("🧭 Tilt sensor", fontSize = 17.sp)
+        Spacer(Modifier.height(8.dp))
+        if (vm.tiltTest) TiltTester(vm) else GhostButton("Test my tilt sensor", { vm.enableTiltTest(true) })
+    }
     var resetDone by remember { mutableStateOf(false) }
     Spacer(Modifier.height(8.dp))
     GhostButton(if (resetDone) "Done — all cards are fresh again ✨" else "Reset \"already seen\" cards", { vm.resetSeen(); resetDone = true })
+}
+
+/** Live view of the tilt sensor: hold the phone like on a forehead and nod / tilt back. */
+@Composable
+private fun TiltTester(vm: GameViewModel) {
+    var up by remember { mutableStateOf(0f) }
+    var steady by remember { mutableStateOf(true) }
+    var upright by remember { mutableStateOf(false) }
+    var has by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val t = vm.tilt
+            up = t.up; steady = t.isSteady(); upright = kotlin.math.abs(t.vertical) > 0.7f; has = t.hasReading
+            kotlinx.coroutines.delay(50)
+        }
+    }
+    val th = vm.tilt.threshold
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(BujhoColors.Card).padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("Using: ${vm.sensorName}", fontSize = 13.sp, color = BujhoColors.Muted)
+        if (!has) { Text("Waiting for sensor…", modifier = Modifier.padding(8.dp)); return@Column }
+        // Meter: left = screen to the floor (correct), right = screen to the ceiling (pass)
+        androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().padding(vertical = 10.dp).height(22.dp)) {
+            Row(Modifier.fillMaxWidth().height(22.dp).clip(RoundedCornerShape(99.dp))) {
+                val side = (1f - th) / 2f
+                Spacer(Modifier.weight(side).height(22.dp).background(BujhoColors.Green))
+                Spacer(Modifier.weight(th).height(22.dp).background(BujhoColors.CardLine))
+                Spacer(Modifier.weight(side).height(22.dp).background(BujhoColors.Orange))
+            }
+            androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(22.dp)) {
+                val x = maxWidth * ((up + 1f) / 2f).coerceIn(0f, 1f)
+                Spacer(Modifier.padding(start = (x - 3.dp).coerceAtLeast(0.dp)).size(6.dp, 22.dp).background(androidx.compose.ui.graphics.Color.White))
+            }
+        }
+        Text(
+            when { up < -th -> "✅ CORRECT zone: screen to the floor"; up > th -> "⏭ PASS zone: screen to the ceiling"; else -> "🙂 Neutral" },
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            (if (steady) "Held steady ✓" else "Moving…") + " · " + (if (upright) "Upright ✓" else "Not upright"),
+            fontSize = 13.sp, color = BujhoColors.Muted,
+        )
+        Spacer(Modifier.height(8.dp))
+        GhostButton("Stop test", { vm.enableTiltTest(false) })
+    }
 }
 
 @Composable

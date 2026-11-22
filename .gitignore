@@ -7,3 +7,4 @@ node_modules/
 *.keystore
 *.jks.b64
 keystore.properties
+!android/app/debug.keystore

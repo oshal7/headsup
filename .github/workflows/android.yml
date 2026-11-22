@@ -3,7 +3,8 @@ name: Android app
 # Builds the Bujho Toh! Android app on GitHub's servers: no Android Studio needed.
 #
 #  - Every push to main (that touches the app) and every manual run:
-#      * "BujhoToh-debug-apk"  - install this on your phone to test
+#      * "BujhoToh-debug-apk"  - install this on your phone to test (also published at
+#        https://github.com/oshal7/headsup/releases/download/latest-build/BujhoToh.apk)
 #      * "BujhoToh-release"    - signed .aab for Google Play (+ signed .apk),
 #                                only when the signing secrets are set (see PLAY_STORE.md)
 #  - Pushing a tag like v1.0.0 also creates a GitHub Release with the files attached.
@@ -74,6 +75,24 @@ jobs:
           name: BujhoToh-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      - name: Publish the direct download link
+        # https://github.com/<owner>/<repo>/releases/download/latest-build/BujhoToh.apk
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk BujhoToh.apk
+          gh release delete latest-build --cleanup-tag --yes || true
+          gh release create latest-build BujhoToh.apk --prerelease --target "$GITHUB_SHA" \
+            --title "Latest test build ($VERSION_NAME)" \
+            --notes "Test build of Bujho Toh! for Android, built automatically from the latest code.
+
+          **Install:** open this page on your Android phone, tap **BujhoToh.apk**, then allow installing from your browser when asked.
+          New builds install over the old one and keep your scores.
+
+          Commit: $GITHUB_SHA"
+          rm BujhoToh.apk
 
       - name: Set up release signing
         if: env.HAS_KEYSTORE == 'true'

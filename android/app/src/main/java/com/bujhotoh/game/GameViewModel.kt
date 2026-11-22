@@ -76,6 +76,12 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     // Ready screen
     var useTilt by mutableStateOf(false); private set
     var readyHint by mutableStateOf(""); private set
+    /** 0..1 while the phone is being held still on the forehead, before the round auto-starts. */
+    var readyProgress by mutableStateOf(0f); private set
+
+    // Settings → "Test tilt sensor"
+    var tiltTest by mutableStateOf(false); private set
+    val sensorName: String get() = tiltSensor.sourceName
 
     // Play screen
     var countdown by mutableStateOf<Int?>(null); private set   // 3, 2, 1, 0 (= "Shuru!"), null when not counting
@@ -105,6 +111,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     init {
         applySettings(settings)
         tiltSensor.onEvent = { ev -> answer(ev == TiltEvent.CORRECT) }
+        sounds.onInterrupted = ::interrupt
         sounds.playMusic(MusicRole.MENU)
     }
 
@@ -135,7 +142,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun openSettings() { tap(); sheet = Sheet.Settings }
     fun openHowTo() { tap(); sheet = Sheet.HowTo }
     fun openEditor(editing: Deck?) { tap(); sheet = Sheet.CustomEditor(editing) }
-    fun closeSheet() { sheet = Sheet.None }
+    fun closeSheet() { sheet = Sheet.None; enableTiltTest(false) }
 
     fun cardCount(d: Deck): Int = if (d.mix) builtInDecks.sumOf { it.words.size } else d.words.size
 
@@ -168,14 +175,17 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         updateSensor()
         readyJob?.cancel()
         if (useTilt) readyJob = viewModelScope.launch {
-            // Auto-start once the phone has been held on a forehead for ~0.9 s.
+            // Auto-start once the phone has been held still on a forehead for ~0.9 s.
             var since = 0L
+            readyProgress = 0f
             while (isActive && screen == Screen.READY) {
                 if (resumed && tilt.isOnForehead()) {
-                    if (since == 0L) since = SystemClock.elapsedRealtime()
-                    if (SystemClock.elapsedRealtime() - since > 900) { startCountdown(); break }
-                } else since = 0L
-                delay(100)
+                    if (since == 0L) { since = SystemClock.elapsedRealtime(); haptics.ready() }
+                    val held = SystemClock.elapsedRealtime() - since
+                    readyProgress = (held / 900f).coerceIn(0f, 1f)
+                    if (held > 900) { readyProgress = 0f; startCountdown(); break }
+                } else { since = 0L; readyProgress = 0f }
+                delay(50)
             }
         }
     }
@@ -357,8 +367,12 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         updateSensor()
     }
 
-    fun onPause() {
-        resumed = false
+    /** Something else needs the phone (a call, an alarm, another app's audio): pause like leaving the app. */
+    private fun interrupt() {
+        if (countdown != null || (running && !paused)) pauseRound()
+    }
+
+    private fun pauseRound() {
         if (countdown != null) {
             // Left during 3-2-1: go back to the "get ready" screen rather than starting unseen.
             stopRound()
@@ -370,13 +384,21 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             paused = true
             tilt.disable()
         }
+    }
+
+    fun onPause() {
+        resumed = false
+        pauseRound()
         sounds.pause()
         tiltSensor.stop()
     }
 
+    fun enableTiltTest(on: Boolean) { tiltTest = on; updateSensor() }
+
     private fun updateSensor() {
         val ctx = sensorContext
-        if (resumed && ctx != null && useTilt && (screen == Screen.READY || screen == Screen.PLAY)) tiltSensor.start(ctx)
+        val inGame = useTilt && (screen == Screen.READY || screen == Screen.PLAY)
+        if (resumed && ctx != null && (inGame || tiltTest)) tiltSensor.start(ctx)
         else tiltSensor.stop()
     }
 

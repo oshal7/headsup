@@ -63,7 +63,10 @@ fun ReadyScreen(vm: GameViewModel) {
                         Legend("⬇ Nod down", "Sahi! (correct)", BujhoColors.GreenLight, Modifier.weight(1f))
                         Legend("⬆ Tilt back", "Pass", BujhoColors.OrangeLight, Modifier.weight(1f))
                     }
+                    HoldStill(vm.readyProgress)
                     BigButton("Start now", onClick = vm::startCountdown)
+                    Text("Sensor: ${vm.sensorName}", color = BujhoColors.Muted.copy(alpha = .7f), fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 6.dp))
                 } else {
                     Text("Tap mode", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
                     Text("A friend holds the phone and taps (or swipes) when the guesser gets it. Swipe right = correct, left = pass.",
@@ -74,6 +77,20 @@ fun ReadyScreen(vm: GameViewModel) {
                     textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
                 Spacer(Modifier.height(8.dp))
             }
+        }
+    }
+}
+
+/** Shows the phone has been recognised on the forehead and the round is about to start. */
+@Composable
+private fun HoldStill(progress: Float) {
+    Column(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            if (progress > 0f) "Perfect, hold still… 🙂" else "Waiting for the phone on your forehead…",
+            color = if (progress > 0f) BujhoColors.GreenLight else BujhoColors.Muted, fontSize = 15.sp, fontWeight = FontWeight.Bold,
+        )
+        Box(Modifier.fillMaxWidth().height(8.dp).padding(top = 2.dp).clip(RoundedCornerShape(99.dp)).background(BujhoColors.Card)) {
+            Box(Modifier.fillMaxWidth(progress).height(8.dp).background(BujhoColors.GreenLight))
         }
     }
 }

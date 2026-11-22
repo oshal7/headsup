@@ -30,6 +30,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -58,6 +61,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bujhotoh.game.ui.theme.BujhoColors
 import kotlin.random.Random
+
+/** Whether UI touch haptics are on (follows the in-game Vibration setting). */
+val LocalUiHapticsEnabled = staticCompositionLocalOf { true }
+
+/**
+ * System touch feedback for taps. Uses the phone's own haptic patterns, so it also respects
+ * the system "Touch feedback" setting, plus the game's Vibration switch.
+ */
+@Composable
+fun rememberUiHaptic(): (HapticFeedbackType) -> Unit {
+    val haptic = LocalHapticFeedback.current
+    val on = LocalUiHapticsEnabled.current
+    return remember(haptic, on) { { type -> if (on) haptic.performHapticFeedback(type) } }
+}
 
 /** Night-sky gradient with a slowly turning rangoli and floating diyas. */
 @Composable
@@ -144,6 +161,7 @@ fun BigButton(
     val src = remember { MutableInteractionSource() }
     val pressed by src.collectIsPressedAsState()
     val drop by animateFloatAsState(if (pressed) 2f else 6f, label = "drop")
+    val haptic = rememberUiHaptic()
     Box(
         modifier
             .fillMaxWidth()
@@ -155,7 +173,7 @@ fun BigButton(
             }
             .clip(RoundedCornerShape(18.dp))
             .background(Brush.verticalGradient(listOf(top, bottom)))
-            .clickable(interactionSource = src, indication = null, role = Role.Button, onClick = onClick)
+            .clickable(interactionSource = src, indication = null, role = Role.Button) { haptic(HapticFeedbackType.Confirm); onClick() }
             .padding(horizontal = 18.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -166,6 +184,7 @@ fun BigButton(
 /** Translucent secondary button. */
 @Composable
 fun GhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = BujhoColors.Ink) {
+    val haptic = rememberUiHaptic()
     Box(
         modifier
             .fillMaxWidth()
@@ -173,7 +192,7 @@ fun GhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
             .background(BujhoColors.Card)
             .border(1.dp, BujhoColors.CardLine, RoundedCornerShape(16.dp))
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(role = Role.Button) { haptic(HapticFeedbackType.ContextClick); onClick() }
             .padding(horizontal = 14.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) { Text(text, color = color, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center) }
@@ -182,13 +201,14 @@ fun GhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
 /** Round icon button (help, settings, back). */
 @Composable
 fun RoundIconButton(label: String, contentDescription: String, onClick: () -> Unit, modifier: Modifier = Modifier, size: Dp = 46.dp) {
+    val haptic = rememberUiHaptic()
     Box(
         modifier
             .size(size)
             .clip(CircleShape)
             .background(BujhoColors.Card)
             .border(1.dp, BujhoColors.CardLine, CircleShape)
-            .clickable(role = Role.Button, onClickLabel = contentDescription, onClick = onClick),
+            .clickable(role = Role.Button, onClickLabel = contentDescription) { haptic(HapticFeedbackType.ContextClick); onClick() },
         contentAlignment = Alignment.Center,
     ) { Text(label, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold) }
 }
@@ -196,6 +216,7 @@ fun RoundIconButton(label: String, contentDescription: String, onClick: () -> Un
 /** Single-choice chips. */
 @Composable
 fun <T> ChoiceChips(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit, modifier: Modifier = Modifier) {
+    val haptic = rememberUiHaptic()
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { o ->
             val on = o == selected
@@ -207,7 +228,7 @@ fun <T> ChoiceChips(options: List<T>, selected: T, label: (T) -> String, onSelec
                     .clip(RoundedCornerShape(12.dp))
                     .background(if (on) BujhoColors.Gold else BujhoColors.Card)
                     .border(BorderStroke(1.dp, if (on) BujhoColors.Gold else BujhoColors.CardLine), RoundedCornerShape(12.dp))
-                    .clickable(role = Role.RadioButton) { onSelect(o) }
+                    .clickable(role = Role.RadioButton) { haptic(HapticFeedbackType.SegmentTick); onSelect(o) }
                     .padding(vertical = 10.dp, horizontal = 4.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -226,6 +247,7 @@ fun DeckTile(
     val src = remember { MutableInteractionSource() }
     val pressed by src.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed) 0.96f else 1f, label = "press")
+    val haptic = rememberUiHaptic()
     val t = rememberInfiniteTransition(label = "shine")
     val shine by t.animateFloat(-1.2f, 1.2f, infiniteRepeatable(tween(6000, delayMillis = shineDelay, easing = LinearEasing), RepeatMode.Restart), label = "s")
     Box(
@@ -239,7 +261,7 @@ fun DeckTile(
                 val x = size.width * shine * 1.5f
                 drawRect(Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = .25f), Color.Transparent), start = Offset(x, 0f), end = Offset(x + size.width * .5f, size.height)))
             }
-            .clickable(interactionSource = src, indication = null, role = Role.Button, onClick = onClick)
+            .clickable(interactionSource = src, indication = null, role = Role.Button) { haptic(HapticFeedbackType.ContextClick); onClick() }
             .padding(14.dp),
     ) {
         if (badge != null) {

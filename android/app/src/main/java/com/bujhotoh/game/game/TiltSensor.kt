@@ -11,15 +11,24 @@ import android.view.Surface
 import android.view.WindowManager
 
 /**
- * Reads gravity from the phone and feeds [TiltLogic] in screen coordinates.
- * Prefers the fused GRAVITY sensor; falls back to a low-passed accelerometer.
+ * Reads the phone's orientation and motion and feeds [TiltLogic] in screen coordinates.
+ *
+ * Orientation, best first:
+ *  1. GAME_ROTATION_VECTOR: gyroscope + accelerometer fused by Android. Smooth and
+ *     reacts instantly to head movement, unaffected by magnets or metal nearby.
+ *  2. GRAVITY: fused gravity estimate (phones with a gyroscope but no rotation vector).
+ *  3. ACCELEROMETER: low-pass filtered, for phones without a gyroscope.
+ * The raw GYROSCOPE is also read, to know whether the phone is being held still.
  */
 class TiltSensor(context: Context, val logic: TiltLogic) : SensorEventListener {
-    private val appContext = context.applicationContext
-    private val sm = appContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val sm = context.applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val rotationVector: Sensor? = sm.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
     private val gravity: Sensor? = sm.getDefaultSensor(Sensor.TYPE_GRAVITY)
     private val accel: Sensor? = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-    private val sensor: Sensor? = gravity ?: accel
+    private val gyro: Sensor? = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+    private val orientation: Sensor? = rotationVector ?: gravity ?: accel
+
+    private val rot = FloatArray(9)
     private val lowPass = FloatArray(3)
     private var running = false
     private var display: Display? = null
@@ -27,12 +36,24 @@ class TiltSensor(context: Context, val logic: TiltLogic) : SensorEventListener {
     /** Called on the main thread when a tilt fires. */
     var onEvent: ((TiltEvent) -> Unit)? = null
 
-    val isAvailable: Boolean get() = sensor != null
+    val isAvailable: Boolean get() = orientation != null
+
+    /** Human-readable name of what's being used, shown in Settings → Test tilt. */
+    val sourceName: String
+        get() = when {
+            rotationVector != null -> "Gyroscope + accelerometer (fused)"
+            gravity != null && gyro != null -> "Gyroscope + gravity"
+            gravity != null -> "Gravity sensor"
+            accel != null -> "Accelerometer only"
+            else -> "No motion sensor"
+        }
 
     fun start(context: Context) {
-        if (running || sensor == null) return
+        val o = orientation ?: return
         display = displayOf(context)
-        running = sm.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
+        if (running) return
+        running = sm.registerListener(this, o, SensorManager.SENSOR_DELAY_GAME)
+        gyro?.let { sm.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
     }
 
     fun stop() {
@@ -42,25 +63,32 @@ class TiltSensor(context: Context, val logic: TiltLogic) : SensorEventListener {
     }
 
     override fun onSensorChanged(e: SensorEvent) {
-        var x = e.values[0]; var y = e.values[1]; val z: Float
-        if (e.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-            // isolate gravity from hand shake
-            val a = 0.8f
-            lowPass[0] = a * lowPass[0] + (1 - a) * x
-            lowPass[1] = a * lowPass[1] + (1 - a) * y
-            lowPass[2] = a * lowPass[2] + (1 - a) * e.values[2]
-            x = lowPass[0]; y = lowPass[1]; z = lowPass[2]
-        } else {
-            z = e.values[2]
+        val v = e.values
+        when (e.sensor.type) {
+            Sensor.TYPE_GYROSCOPE -> { logic.onRotationSpeed(v[0], v[1], v[2]); return }
+            Sensor.TYPE_GAME_ROTATION_VECTOR -> {
+                // Rotation matrix maps device -> world; its last row is world "up" in device axes.
+                SensorManager.getRotationMatrixFromVector(rot, v)
+                feed(rot[6], rot[7], rot[8], e.timestamp)
+            }
+            Sensor.TYPE_GRAVITY -> feed(v[0], v[1], v[2], e.timestamp)
+            Sensor.TYPE_ACCELEROMETER -> {
+                val a = 0.8f // isolate gravity from hand shake
+                for (i in 0..2) lowPass[i] = a * lowPass[i] + (1 - a) * v[i]
+                feed(lowPass[0], lowPass[1], lowPass[2], e.timestamp)
+            }
         }
-        // Device axes -> screen axes for the current display rotation.
+    }
+
+    /** Device axes -> screen axes for the current display rotation, then into the logic. */
+    private fun feed(x: Float, y: Float, z: Float, timestamp: Long) {
         val (sx, sy) = when (display?.rotation ?: Surface.ROTATION_0) {
             Surface.ROTATION_90 -> -y to x
             Surface.ROTATION_180 -> -x to -y
             Surface.ROTATION_270 -> y to -x
             else -> x to y
         }
-        logic.onGravity(sx, sy, z)?.let { ev -> onEvent?.invoke(ev) }
+        logic.onGravity(sx, sy, z, timestamp)?.let { ev -> onEvent?.invoke(ev) }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit

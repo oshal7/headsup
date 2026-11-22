@@ -1,6 +1,7 @@
 package com.bujhotoh.game
 
 import android.content.pm.ActivityInfo
+import android.media.AudioManager
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -15,6 +16,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -22,6 +24,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.bujhotoh.game.ui.components.FestiveBackground
+import com.bujhotoh.game.ui.components.LocalUiHapticsEnabled
 import com.bujhotoh.game.ui.screens.HomeScreen
 import com.bujhotoh.game.ui.screens.PlayScreen
 import com.bujhotoh.game.ui.screens.ReadyScreen
@@ -36,6 +39,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        volumeControlStream = AudioManager.STREAM_MUSIC // volume keys control the game, not the ringer
         setContent { BujhoTheme { BujhoApp(vm, this) } }
     }
 
@@ -77,7 +81,7 @@ fun BujhoApp(vm: GameViewModel, activity: MainActivity? = LocalContext.current a
         }
     }
 
-    FestiveBackground {
+    CompositionLocalProvider(LocalUiHapticsEnabled provides vm.settings.vibration) { FestiveBackground {
         AnimatedContent(
             targetState = screen,
             transitionSpec = { (fadeIn(tween(300)) + scaleIn(tween(300), initialScale = .97f)) togetherWith fadeOut(tween(150)) },
@@ -91,5 +95,5 @@ fun BujhoApp(vm: GameViewModel, activity: MainActivity? = LocalContext.current a
             }
         }
         Sheets(vm)
-    }
+    } }
 }

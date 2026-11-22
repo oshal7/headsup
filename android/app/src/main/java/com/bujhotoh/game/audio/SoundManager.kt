@@ -1,11 +1,17 @@
 package com.bujhotoh.game.audio
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.SoundPool
 import android.os.Handler
 import android.os.Looper
+import androidx.core.content.ContextCompat
 import com.bujhotoh.game.R
 import com.bujhotoh.game.data.MusicStyle
 
@@ -35,15 +41,31 @@ enum class Sfx(val res: Int, val volume: Float) {
 
 enum class MusicRole { MENU, PLAY }
 
+/**
+ * Plays effects (SoundPool) and looping background music (MediaPlayer), and behaves like a
+ * good Android citizen:
+ *  - asks for audio focus, so other apps' music pauses while ours plays and resumes after;
+ *  - pauses music for phone calls, alarms and other apps, and ducks under navigation prompts;
+ *  - stops music when headphones are unplugged (so it doesn't suddenly blare from the speaker);
+ *  - uses the media stream, so the phone's volume keys control it.
+ */
 class SoundManager(context: Context) {
     private val appContext = context.applicationContext
-    private val attrs = AudioAttributes.Builder()
+    private val sfxAttrs = AudioAttributes.Builder()
         .setUsage(AudioAttributes.USAGE_GAME)
         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
         .build()
-    private val pool = SoundPool.Builder().setMaxStreams(6).setAudioAttributes(attrs).build()
+    private val musicAttrs = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_GAME)
+        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+        .build()
+    private val pool = SoundPool.Builder().setMaxStreams(6).setAudioAttributes(sfxAttrs).build()
     private val ids = Sfx.entries.associateWith { pool.load(appContext, it.res, 1) }
     private val main = Handler(Looper.getMainLooper())
+    private val audio = appContext.getSystemService(AudioManager::class.java)
+
+    /** Called when something else needs the audio (incoming call, alarm, another app): the round should pause. */
+    var onInterrupted: (() -> Unit)? = null
 
     var sfxEnabled = true
     var musicEnabled = true
@@ -55,6 +77,24 @@ class SoundManager(context: Context) {
     private var playingRes = 0
     private var role: MusicRole? = null
     private var paused = false
+    private var hasFocus = false
+    private var heldByOthers = false   // focus temporarily lost; resume when it comes back
+
+    private val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+        .setAudioAttributes(musicAttrs)
+        .setWillPauseWhenDucked(false)
+        .setOnAudioFocusChangeListener({ change -> onFocusChange(change) }, main)
+        .build()
+
+    private val noisyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(c: Context, i: Intent) {
+            if (i.action == AudioManager.ACTION_AUDIO_BECOMING_NOISY) {
+                player?.let { runCatching { it.pause() } }
+                heldByOthers = true
+            }
+        }
+    }
+    private var noisyRegistered = false
 
     fun play(sfx: Sfx) {
         if (!sfxEnabled) return
@@ -66,42 +106,93 @@ class SoundManager(context: Context) {
         this.role = role
         if (!musicEnabled || paused) return
         val res = trackFor(style, role)
-        if (!force && res == playingRes && player != null) return
+        val current = player
+        if (!force && res == playingRes && current != null) {
+            // Same track: make sure it's actually playing (e.g. after a phone call paused it).
+            if (requestFocus() && !current.isPlaying) runCatching { current.start() }
+            heldByOthers = false
+            return
+        }
         stopMusic(keepRole = true)
-        val mp = MediaPlayer.create(appContext, res, attrs, 0) ?: return
+        if (!requestFocus()) return
+        val mp = MediaPlayer.create(appContext, res, musicAttrs, audio.generateAudioSessionId()) ?: return
         mp.isLooping = true
         mp.setVolume(0f, 0f)
         mp.start()
-        player = mp; playingRes = res
+        player = mp; playingRes = res; heldByOthers = false
         fade(mp, 0f, MUSIC_VOLUME, 600)
     }
 
     fun stopMusic(keepRole: Boolean = false) {
-        if (!keepRole) role = null
+        if (!keepRole) { role = null; abandonFocus() }
         player?.let { mp -> runCatching { mp.stop() }; mp.release() }
         player = null; playingRes = 0
     }
 
-    /** App went to background. */
+    /** App went to background: pause and let other apps have the audio. */
     fun pause() {
         paused = true
         player?.let { runCatching { it.pause() } }
+        abandonFocus()
+        if (noisyRegistered) { runCatching { appContext.unregisterReceiver(noisyReceiver) }; noisyRegistered = false }
     }
 
     /** App came back. */
     fun resume() {
         paused = false
+        if (!noisyRegistered) {
+            ContextCompat.registerReceiver(appContext, noisyReceiver, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY),
+                ContextCompat.RECEIVER_NOT_EXPORTED)
+            noisyRegistered = true
+        }
         resumeMusic()
     }
 
     private fun resumeMusic() {
         val r = role ?: return
         val mp = player
-        if (mp != null && musicEnabled && !paused) runCatching { mp.start() } else playMusic(r, force = true)
+        if (mp != null && musicEnabled && !paused && requestFocus()) { runCatching { mp.start() }; heldByOthers = false }
+        else if (mp == null) playMusic(r, force = true)
+    }
+
+    private fun onFocusChange(change: Int) {
+        when (change) {
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                hasFocus = false; heldByOthers = true
+                player?.let { runCatching { it.pause() } }
+                onInterrupted?.invoke()
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {   // phone call, alarm, voice assistant
+                heldByOthers = true
+                player?.let { runCatching { it.pause() } }
+                onInterrupted?.invoke()
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> player?.setVolume(MUSIC_VOLUME * 0.25f, MUSIC_VOLUME * 0.25f)
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                hasFocus = true
+                player?.let { mp ->
+                    mp.setVolume(MUSIC_VOLUME, MUSIC_VOLUME)
+                    if (heldByOthers && !paused && musicEnabled) runCatching { mp.start() }
+                }
+                heldByOthers = false
+            }
+        }
+    }
+
+    private fun requestFocus(): Boolean {
+        if (hasFocus) return true
+        hasFocus = audio.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        return hasFocus
+    }
+
+    private fun abandonFocus() {
+        if (!hasFocus) return
+        audio.abandonAudioFocusRequest(focusRequest)
+        hasFocus = false
     }
 
     fun release() {
-        stopMusic(); pool.release()
+        pause(); stopMusic(); pool.release()
     }
 
     private fun fade(mp: MediaPlayer, from: Float, to: Float, ms: Long) {

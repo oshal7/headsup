@@ -7,6 +7,14 @@ Android Studio or the Android SDK.
 
 ## 1. Try the app on your phone (no account needed)
 
+**Direct link (always the latest build):**
+https://github.com/oshal7/headsup/releases/download/latest-build/BujhoToh.apk
+
+Open it on your Android phone → tap to install → allow installing from your browser when asked.
+New builds install over the old one.
+
+Or from GitHub Actions:
+
 1. Open the repo on GitHub → **Actions** → **Android app** → the latest green run.
 2. Under **Artifacts**, download **BujhoToh-debug-apk** (a zip) and unzip it on your phone.
 3. Tap the `.apk`. Android will ask you to allow installing from this source → allow → **Install**.

@@ -70,7 +70,7 @@ every push to `main` goes live in about a minute.
 A native Android version (Kotlin + Jetpack Compose) lives in [`android/`](android/).
 It is built entirely by GitHub Actions; no Android Studio needed:
 
-- **Actions → Android app → latest run → Artifacts → `BujhoToh-debug-apk`** to install on your phone.
+- **Download the latest build:** https://github.com/oshal7/headsup/releases/download/latest-build/BujhoToh.apk (open on your Android phone).
 - Signed `.aab` for Google Play once the signing secrets are added.
 
 See **[PLAY_STORE.md](PLAY_STORE.md)** for the full publishing checklist and store listing text.

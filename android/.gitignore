@@ -9,3 +9,7 @@ captures/
 keystore.properties
 *.jks
 *.keystore
+
+# Shared *test-build* signing key (public on purpose, so test APKs install as updates).
+# The real Play upload key is NEVER committed.
+!app/debug.keystore
