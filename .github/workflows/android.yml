@@ -6,7 +6,6 @@ name: Android app
 #      * "BujhoToh-debug-apk"  - install this on your phone to test
 #      * "BujhoToh-release"    - signed .aab for Google Play (+ signed .apk),
 #                                only when the signing secrets are set (see PLAY_STORE.md)
-#      * "app-screenshots"     - screens rendered by the screenshot tests
 #  - Pushing a tag like v1.0.0 also creates a GitHub Release with the files attached.
 
 on:
@@ -124,7 +123,7 @@ jobs:
             android/app/build/outputs/apk/release/*.apk
 
   test:
-    name: Unit + screenshot tests
+    name: Unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -139,13 +138,6 @@ jobs:
       - name: Run tests
         timeout-minutes: 15
         run: ./gradlew :app:testDebugUnitTest
-      - name: Upload screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-screenshots
-          path: android/app/build/screenshots/
-          if-no-files-found: ignore
       - name: Upload test report
         if: failure()
         uses: actions/upload-artifact@v4

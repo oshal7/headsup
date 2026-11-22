@@ -60,15 +60,6 @@ android {
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
-        unitTests.isIncludeAndroidResources = true
-        unitTests.all {
-            // Screenshot tests (Robolectric + Roborazzi) write PNGs to app/build/screenshots/
-            it.systemProperty("roborazzi.test.record", "true")
-            it.maxHeapSize = "3g"
-            // Robolectric fetches its Android runtime jar from Maven Central
-            it.systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2")
-            it.systemProperty("robolectric.dependency.repo.id", "central")
-        }
     }
 }
 
@@ -95,10 +86,4 @@ dependencies {
     testImplementation(libs.junit)
     // Real org.json for JVM unit tests (Android's copy is only available on-device)
     testImplementation(libs.org.json)
-    testImplementation(libs.robolectric)
-    testImplementation(libs.roborazzi)
-    testImplementation(libs.roborazzi.compose)
-    testImplementation(platform(libs.compose.bom))
-    testImplementation(libs.compose.ui.test.junit4)
-    debugImplementation(libs.compose.ui.test.manifest)
 }

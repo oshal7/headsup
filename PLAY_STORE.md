@@ -95,8 +95,9 @@ For a named version, push a tag such as `v1.0.0` and a GitHub Release is created
 - **Tags:** Party, Word, Trivia, Family
 - **App icon:** `android/store/icon-512.png`
 - **Feature graphic:** `android/store/feature-graphic-1024x500.png`
-- **Phone screenshots (2–8):** download the **app-screenshots** artifact from any Actions run
-  (portrait files are 9:16 and landscape 16:9, both accepted).
+- **Phone screenshots (2–8):** take them on your phone with the installed app (power + volume-down):
+  the home screen, a deck, the "phone on forehead" screen, a card mid-round, the green "Sahi!" flash and the results.
+  Normal phone screenshots meet Play's size rules.
 - **Contact email:** required (shown publicly), so use one you're happy to share.
 
 **Short description** (max 80 characters):
