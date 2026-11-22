@@ -70,6 +70,7 @@ import com.bujhotoh.game.data.Region
 import com.bujhotoh.game.data.Sensitivity
 import com.bujhotoh.game.ui.components.BigButton
 import com.bujhotoh.game.ui.components.ChoiceChips
+import com.bujhotoh.game.ui.components.DeckIcon
 import com.bujhotoh.game.ui.components.GhostButton
 import com.bujhotoh.game.ui.components.SectionLabel
 import com.bujhotoh.game.ui.components.rememberUiHaptic
@@ -164,7 +165,7 @@ private fun ColumnScope.Welcome(vm: GameViewModel) {
 private fun ColumnScope.CategoryPick(vm: GameViewModel, c: Category) {
     val regions = vm.regionsFor(c)
     val region = vm.selectedRegion(c)
-    TitleBlock(c.emoji, c.name, c.desc)
+    TitleBlock(c.id, c.emoji, c.name, c.desc)
     if (regions.size > 1) {
         SectionLabel(stringResource(R.string.which_country))
         FlagPicker(regions, region.id, { vm.chooseRegion(c, it) })
@@ -180,7 +181,7 @@ private fun ColumnScope.CategoryPick(vm: GameViewModel, c: Category) {
 @Composable
 private fun ColumnScope.DeckInfo(vm: GameViewModel, deck: Deck) {
     var confirmDelete by remember { mutableStateOf(false) }
-    TitleBlock(deck.emoji, deck.name, deck.desc)
+    TitleBlock(deck.id, deck.emoji, deck.name, deck.desc)
     Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(top = 6.dp)) {
         val n = if (deck.mix) vm.content.mixCards(vm.homeRegion).size else deck.words.size
         Text("🃏 " + stringResource(R.string.cards_count, n), fontSize = 14.sp)
@@ -205,10 +206,10 @@ private fun ColumnScope.DeckInfo(vm: GameViewModel, deck: Deck) {
 }
 
 @Composable
-private fun ColumnScope.TitleBlock(emoji: String, name: String, desc: String) {
+private fun ColumnScope.TitleBlock(id: String, emoji: String, name: String, desc: String) {
     val pop = remember { Animatable(0f) }
     LaunchedEffect(name) { pop.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy)) }
-    Text(emoji, fontSize = 64.sp, modifier = Modifier.scale(pop.value))
+    DeckIcon(id, emoji, 88.dp, Modifier.scale(pop.value))
     Text(name, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
     if (desc.isNotEmpty()) Text(desc, color = BujhoColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.padding(vertical = 6.dp))
 }
@@ -393,6 +394,7 @@ private fun ColumnScope.CustomEditor(vm: GameViewModel, editing: Deck?) {
     Spacer(Modifier.height(10.dp))
     val modeNames = mapOf(
         ClueMode.SAY to stringResource(R.string.mode_say), ClueMode.ACT to stringResource(R.string.mode_act), ClueMode.HUM to stringResource(R.string.mode_hum),
+        ClueMode.SOUND to stringResource(R.string.mode_sound),
     )
     ChoiceChips(ClueMode.entries, mode, { modeNames.getValue(it) }, { mode = it })
     Spacer(Modifier.height(14.dp))

@@ -65,7 +65,12 @@ Then open http://localhost:8000. To use the **motion sensor on a phone** the pag
 Play it at **https://oshal7.github.io/headsup/**. It's hosted by GitHub Pages (Settings → Pages → Deploy from a branch → `main` / root);
 every push to `main` goes live in about a minute.
 
-## Android app
+## Android app: **Headzy**
+
+The Play Store app is called **Headzy** (store title "Headzy: Charades Party Game"): 32 decks and 3,000+ cards
+on swipeable shelves (Party Classics, Act It Out, Movies Music & TV, Family Fun, Festivals & Traditions).
+Movie/music/TV decks ask for a country when you open them. Deck art is Microsoft's Fluent Emoji 3D (MIT),
+the mascot/icon is drawn in `tools/art/mascot.js` and rendered with `node tools/render-icons.js`.
 
 A native Android version (Kotlin + Jetpack Compose) lives in [`android/`](android/).
 It is built entirely by GitHub Actions; no Android Studio needed:
@@ -77,11 +82,11 @@ See **[PLAY_STORE.md](PLAY_STORE.md)** for the full publishing checklist and sto
 
 ## Adding cards
 
-**Website:** edit `js/data.js`. **Android app:** universal decks and country packs live in [`content/`](content/) (`categories.js` lists categories and which countries each has; `world.js`, `us.js`, `gb.js`, `cn.js` hold cards; India reuses `js/data.js`). After editing, run `node tools/build-content.js`. Web decks are plain objects:
+**Website:** edit `js/data.js`. **Android app:** universal decks and country packs live in [`content/`](content/) (`categories.js` lists categories, their home-screen shelf (`group`) and which countries each has; `world.js`, `us.js`, `gb.js`, `cn.js` hold cards; India reuses `js/data.js`). After editing, run `node tools/build-content.js`. Web decks are plain objects:
 
 ```js
 { id: 'my-deck', name: 'My Deck', hindi: 'मेरा डेक', emoji: '🎉',
-  colors: ['#ff3d6e', '#ff9a3d'], desc: '…', mode: 'say' /* or 'act' | 'hum' */,
+  colors: ['#ff3d6e', '#ff9a3d'], desc: '…', mode: 'say' /* or 'act' | 'hum' | 'sound' (Android) */,
   words: ['…', '…'] }
 ```
 

@@ -37,6 +37,8 @@ const categories = C.categories.map(c => {
     if (words && words.length) variants[r] = Array.from(new Set(words.map(w => w.trim()).filter(Boolean)));
   }
   if (!Object.keys(variants).length) throw new Error(`category "${c.id}" has no cards`);
+  if (!C.groups.some(g => g.id === c.group)) throw new Error(`category "${c.id}" has unknown group "${c.group}"`);
+  if (!['say', 'act', 'hum', 'sound'].includes(c.mode)) throw new Error(`category "${c.id}" has unknown mode "${c.mode}"`);
   for (const [r, w] of Object.entries(variants)) if (w.length < 20) throw new Error(`${c.id}/${r} has only ${w.length} cards`);
   return { ...c, variants };
 });
@@ -47,7 +49,7 @@ for (const [r, p] of Object.entries(packs)) for (const k of Object.keys(p)) {
 
 const out = path.join(ROOT, 'android/app/src/main/assets/content.json');
 fs.mkdirSync(path.dirname(out), { recursive: true });
-fs.writeFileSync(out, JSON.stringify({ version: 2, regions: C.regions, categories }, null, 1) + '\n');
+fs.writeFileSync(out, JSON.stringify({ version: 3, regions: C.regions, groups: C.groups, categories }, null, 1) + '\n');
 const total = categories.reduce((n, c) => n + Object.values(c.variants).reduce((m, w) => m + w.length, 0), 0);
 console.log(`${categories.length} categories, ${total} cards -> ${path.relative(ROOT, out)}`);
 for (const c of categories) console.log(`  ${c.emoji} ${c.name.padEnd(22)} ${Object.entries(c.variants).map(([r, w]) => `${r}:${w.length}`).join('  ')}`);

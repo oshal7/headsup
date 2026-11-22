@@ -23,6 +23,14 @@ class ContentTest {
         }
     }
 
+    @Test fun `every category sits on a home-screen shelf`() {
+        assertEquals(listOf("party", "act", "pop", "family", "culture"), content.groups.map { it.id })
+        content.categories.forEach { c -> assertTrue("${c.id} has no shelf", content.groups.any { it.id == c.group }) }
+        assertEquals(content.categories.size, content.groups.sumOf { content.categoriesIn(it).size })
+        assertEquals(ClueMode.SOUND, cat("sounds").mode)
+        assertTrue(cat("famous").isUniversal)
+    }
+
     @Test fun `animals are universal, movies need a country`() {
         assertTrue(cat("animals").isUniversal)
         assertFalse(cat("movies").isUniversal)

@@ -76,11 +76,11 @@ fun rememberUiHaptic(): (HapticFeedbackType) -> Unit {
     return remember(haptic, on) { { type -> if (on) haptic.performHapticFeedback(type) } }
 }
 
-/** Night-sky gradient with a slowly turning rangoli and floating diyas. */
+/** Deep violet backdrop with slowly turning light rays and drifting sparkles (game-lobby style). */
 @Composable
 fun FestiveBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val t = rememberInfiniteTransition(label = "bg")
-    val spin by t.animateFloat(0f, 360f, infiniteRepeatable(tween(80_000, easing = LinearEasing)), label = "spin")
+    val spin by t.animateFloat(0f, 360f, infiniteRepeatable(tween(120_000, easing = LinearEasing)), label = "spin")
     Box(
         modifier
             .fillMaxSize()
@@ -94,53 +94,62 @@ fun FestiveBackground(modifier: Modifier = Modifier, content: @Composable BoxSco
                 )
             }
     ) {
-        Canvas(Modifier.fillMaxSize().alpha(0.13f)) {
-            rangoli(Offset(size.width * 1.0f, 0f), size.minDimension * 0.62f, spin)
-            rangoli(Offset(0f, size.height), size.minDimension * 0.5f, -spin * 0.7f)
+        Canvas(Modifier.fillMaxSize().alpha(0.07f)) {
+            sunburst(Offset(size.width / 2, size.height * 0.08f), size.maxDimension * 1.2f, spin)
         }
-        FloatingDiyas()
+        Sparkles()
         content()
     }
 }
 
-/** Eight-petal rangoli drawn with paths. */
-fun DrawScope.rangoli(center: Offset, radius: Float, angle: Float) {
+/** Light rays fanning out from [center]. */
+fun DrawScope.sunburst(center: Offset, radius: Float, angle: Float, rays: Int = 18, color: Color = Color.White) {
+    val step = 360f / rays
     rotate(angle, center) {
-        drawCircle(BujhoColors.Gold, radius * 0.92f, center, style = Stroke(radius * 0.015f))
-        for (i in 0 until 8) {
-            rotate(i * 45f, center) {
+        for (i in 0 until rays) {
+            rotate(i * step, center) {
+                val half = Math.toRadians(step / 4.0)
                 val p = Path().apply {
                     moveTo(center.x, center.y)
-                    cubicTo(center.x - radius * .15f, center.y - radius * .3f, center.x - radius * .08f, center.y - radius * .7f, center.x, center.y - radius * .88f)
-                    cubicTo(center.x + radius * .08f, center.y - radius * .7f, center.x + radius * .15f, center.y - radius * .3f, center.x, center.y)
+                    lineTo(center.x + radius * kotlin.math.sin(-half).toFloat(), center.y - radius * kotlin.math.cos(half).toFloat())
+                    lineTo(center.x + radius * kotlin.math.sin(half).toFloat(), center.y - radius * kotlin.math.cos(half).toFloat())
                     close()
                 }
-                drawPath(p, BujhoColors.Pink)
-                drawCircle(BujhoColors.Green, radius * 0.05f, Offset(center.x, center.y - radius * 0.92f))
+                drawPath(p, color)
             }
         }
-        drawCircle(BujhoColors.Saffron, radius * 0.18f, center)
-        drawCircle(BujhoColors.Violet, radius * 0.08f, center)
     }
 }
 
+/** Four-point sparkle star. */
+fun DrawScope.sparkle(center: Offset, r: Float, color: Color) {
+    val k = r * 0.22f
+    val p = Path().apply {
+        moveTo(center.x, center.y - r)
+        quadraticTo(center.x + k, center.y - k, center.x + r, center.y)
+        quadraticTo(center.x + k, center.y + k, center.x, center.y + r)
+        quadraticTo(center.x - k, center.y + k, center.x - r, center.y)
+        quadraticTo(center.x - k, center.y - k, center.x, center.y - r)
+        close()
+    }
+    drawPath(p, color)
+}
+
 @Composable
-private fun FloatingDiyas() {
-    val items = remember { List(8) { Triple(Random.nextFloat(), 14_000 + Random.nextInt(10_000), Random.nextInt(14, 28)) } }
-    val t = rememberInfiniteTransition(label = "diyas")
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val w = constraints.maxWidth.toFloat(); val h = constraints.maxHeight.toFloat()
-        items.forEachIndexed { i, (x, dur, sizeSp) ->
-            val p by t.animateFloat(0f, 1f, infiniteRepeatable(tween(dur, easing = LinearEasing)), label = "d$i")
-            Text(
-                if (i % 3 == 0) "🪔" else "✨",
-                fontSize = sizeSp.sp,
-                modifier = Modifier.graphicsLayer {
-                    val phase = (p + i * 0.13f) % 1f
-                    translationX = x * w * 0.92f
-                    translationY = h - phase * (h + 80f)
-                    alpha = (if (phase < .1f) phase * 10 else 1f - phase) * 0.6f
-                },
+private fun Sparkles() {
+    val items = remember { List(10) { Triple(Random.nextFloat(), 16_000 + Random.nextInt(12_000), 5f + Random.nextFloat() * 9f) } }
+    val colors = listOf(BujhoColors.Gold, BujhoColors.Pink, Color.White, BujhoColors.GreenLight)
+    val t = rememberInfiniteTransition(label = "sparkles")
+    val progress = items.mapIndexed { i, (_, dur, _) ->
+        t.animateFloat(0f, 1f, infiniteRepeatable(tween(dur, easing = LinearEasing)), label = "s$i")
+    }
+    Canvas(Modifier.fillMaxSize()) {
+        items.forEachIndexed { i, (x, _, r) ->
+            val phase = (progress[i].value + i * 0.13f) % 1f
+            val a = (if (phase < .1f) phase * 10 else 1f - phase) * 0.45f
+            sparkle(
+                Offset(x * size.width, size.height - phase * (size.height + 60f)),
+                r.dp.toPx(), colors[i % colors.size].copy(alpha = a),
             )
         }
     }
@@ -198,6 +207,21 @@ fun GhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
     ) { Text(text, color = color, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center) }
 }
 
+/** Round icon button with a 3D illustration. */
+@Composable
+fun RoundArtButton(@androidx.annotation.DrawableRes art: Int, contentDescription: String, onClick: () -> Unit, modifier: Modifier = Modifier, size: Dp = 46.dp) {
+    val haptic = rememberUiHaptic()
+    Box(
+        modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(BujhoColors.Card)
+            .border(1.dp, BujhoColors.CardLine, CircleShape)
+            .clickable(role = Role.Button, onClickLabel = contentDescription) { haptic(HapticFeedbackType.ContextClick); onClick() },
+        contentAlignment = Alignment.Center,
+    ) { ArtIcon(art, size * 0.56f) }
+}
+
 /** Round icon button (help, settings, back). */
 @Composable
 fun RoundIconButton(label: String, contentDescription: String, onClick: () -> Unit, modifier: Modifier = Modifier, size: Dp = 46.dp) {
@@ -238,46 +262,113 @@ fun <T> ChoiceChips(options: List<T>, selected: T, label: (T) -> String, onSelec
     }
 }
 
-/** A deck tile on the home screen. */
+/**
+ * A deck on the home screen, styled like a collectible game card: a coloured portrait card with a
+ * glowing 3D illustration, a chunky bottom edge and a label strip.
+ */
 @Composable
-fun DeckTile(
-    name: String, subtitle: String, emoji: String, cardsLabel: String, badge: String?,
-    colors: Pair<Color, Color>, onClick: () -> Unit, modifier: Modifier = Modifier, shineDelay: Int = 0,
+fun DeckCard(
+    id: String, name: String, emoji: String, info: String, tag: String?, best: Int?,
+    colors: Pair<Color, Color>, onClick: () -> Unit, modifier: Modifier = Modifier,
+    width: Dp = 136.dp, height: Dp = 184.dp,
 ) {
     val src = remember { MutableInteractionSource() }
     val pressed by src.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 0.96f else 1f, label = "press")
+    val press by animateFloatAsState(if (pressed) 1f else 0f, label = "press")
     val haptic = rememberUiHaptic()
-    val t = rememberInfiniteTransition(label = "shine")
-    val shine by t.animateFloat(-1.2f, 1.2f, infiniteRepeatable(tween(6000, delayMillis = shineDelay, easing = LinearEasing), RepeatMode.Restart), label = "s")
+    val shape = RoundedCornerShape(22.dp)
+    val edge = lerpColor(colors.second, Color.Black, 0.45f)
     Box(
         modifier
-            .heightIn(min = 132.dp)
-            .scale(scale)
-            .clip(RoundedCornerShape(22.dp))
-            .background(Brush.linearGradient(listOf(colors.first, colors.second)))
-            .drawWithContent {
-                drawContent()
-                val x = size.width * shine * 1.5f
-                drawRect(Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = .25f), Color.Transparent), start = Offset(x, 0f), end = Offset(x + size.width * .5f, size.height)))
-            }
-            .clickable(interactionSource = src, indication = null, role = Role.Button) { haptic(HapticFeedbackType.ContextClick); onClick() }
-            .padding(14.dp),
+            .size(width, height + 6.dp)
+            .clickable(interactionSource = src, indication = null, role = Role.Button, onClickLabel = name) {
+                haptic(HapticFeedbackType.ContextClick); onClick()
+            },
     ) {
-        if (badge != null) {
-            Text(
-                badge, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.align(Alignment.TopStart).clip(CircleShape).background(Color.Black.copy(alpha = .28f)).padding(horizontal = 8.dp, vertical = 1.dp),
-            )
-        }
-        Text(emoji, fontSize = 40.sp, modifier = Modifier.align(Alignment.TopEnd).rotate(if (pressed) 10f else 0f))
-        Column(Modifier.align(Alignment.BottomStart)) {
-            Text(name, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 19.sp)
-            if (subtitle.isNotEmpty()) Text(subtitle, fontSize = 15.sp, color = Color.White.copy(alpha = .95f))
-            if (cardsLabel.isNotEmpty()) Text(cardsLabel, fontSize = 12.sp, color = Color.White.copy(alpha = .85f))
+        // Chunky edge under the card; the card sinks onto it when pressed.
+        Box(Modifier.offset(y = 6.dp).size(width, height).clip(shape).background(edge))
+        Column(
+            Modifier
+                .offset(y = (press * 4).dp)
+                .size(width, height)
+                .clip(shape)
+                .background(Brush.verticalGradient(listOf(colors.first, colors.second)))
+                .border(2.dp, Color.White.copy(alpha = .28f), shape),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                Canvas(Modifier.fillMaxSize()) {
+                    drawCircle(
+                        Brush.radialGradient(listOf(Color.White.copy(alpha = .55f), Color.White.copy(alpha = 0f)), center = center, radius = size.minDimension * .5f),
+                        radius = size.minDimension * .5f,
+                    )
+                }
+                DeckIcon(id, emoji, 80.dp, Modifier.graphicsLayer { rotationZ = press * -8f; scaleX = 1f + press * .08f; scaleY = scaleX })
+                if (best != null) {
+                    Row(
+                        Modifier.align(Alignment.TopStart).padding(8.dp).clip(CircleShape).background(Color.Black.copy(alpha = .3f))
+                            .padding(start = 4.dp, end = 8.dp, top = 1.dp, bottom = 1.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        ArtIcon(com.bujhotoh.game.R.drawable.art_trophy, 14.dp)
+                        Text(" $best", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 12.sp)
+                    }
+                }
+                if (tag != null) {
+                    Text(
+                        tag.uppercase(), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = .8.sp, lineHeight = 10.sp,
+                        color = BujhoColors.OnGold,
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).clip(CircleShape).background(BujhoColors.Gold)
+                            .padding(horizontal = 7.dp, vertical = 2.dp),
+                    )
+                }
+            }
+            Column(
+                Modifier.fillMaxWidth().background(Color.Black.copy(alpha = .22f)).padding(horizontal = 10.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    name, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 16.sp, maxLines = 2,
+                    textAlign = TextAlign.Center, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
+                if (info.isNotEmpty()) Text(info, fontSize = 11.sp, color = Color.White.copy(alpha = .8f), lineHeight = 12.sp, maxLines = 1)
+            }
         }
     }
 }
+
+/** The "make your own deck" card at the start of the Your Decks shelf. */
+@Composable
+fun NewDeckCard(title: String, sub: String, onClick: () -> Unit, width: Dp = 136.dp, height: Dp = 184.dp) {
+    val haptic = rememberUiHaptic()
+    val shape = RoundedCornerShape(22.dp)
+    Column(
+        Modifier
+            .size(width, height)
+            .clip(shape)
+            .background(Color.White.copy(alpha = .05f))
+            .drawBehind {
+                drawRoundRect(
+                    Color.White.copy(alpha = .4f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(22.dp.toPx()),
+                    style = Stroke(2.dp.toPx(), pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(14f, 10f))),
+                )
+            }
+            .clickable(role = Role.Button) { haptic(HapticFeedbackType.ContextClick); onClick() }
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Box(Modifier.size(56.dp).clip(CircleShape).background(BujhoColors.Gold), contentAlignment = Alignment.Center) {
+            Text("+", fontSize = 36.sp, fontWeight = FontWeight.ExtraBold, color = BujhoColors.OnGold, lineHeight = 36.sp)
+        }
+        Text(title, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, lineHeight = 16.sp, modifier = Modifier.padding(top = 10.dp))
+        Text(sub, fontSize = 11.sp, color = BujhoColors.Muted, textAlign = TextAlign.Center, lineHeight = 13.sp)
+    }
+}
+
+private fun lerpColor(a: Color, b: Color, t: Float) = Color(
+    a.red + (b.red - a.red) * t, a.green + (b.green - a.green) * t, a.blue + (b.blue - a.blue) * t, 1f,
+)
 
 @Composable
 fun SectionLabel(text: String) {
